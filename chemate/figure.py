@@ -1,10 +1,12 @@
-from chemate.utils import Position
+from chemate.utils import Position, Direction
+from chemate.player import Player
+import itertools
 
 
 class Figure(object):
-    def __init__(self, color, game, position):
+    def __init__(self, color, position):
         self.color = color
-        self.game = game
+        self.board = None
         self.position = position
 
     def available_moves(self):
@@ -12,7 +14,7 @@ class Figure(object):
         Get available moves for current figure position
         :return: iterator with valid positions of this figure
         """
-        return []
+        return None
 
     def move(self, new_position):
         """
@@ -20,46 +22,50 @@ class Figure(object):
         :param new_position:
         :return: None
         """
-        self.position = new_position
+        if new_position in self.available_moves():
+            self.position = new_position.copy()
+
+    def generate_moves(self, direction, only_empty=False, limit=8):
+        """
+        Generate continues moves in direction from current position
+        :param direction:
+        :param only_empty:
+        :param limit:
+        :return: Iterator object with available positions
+        """
+        position = self.position.copy()
+        for i in itertools.count():
+            position = position + direction
+            if i < limit and self.board.can_move(color=self.color, position=position, only_empty=only_empty):
+                yield position
+            else:
+                break
+        pass
 
 
 class Pawn(Figure):
-    def __init__(self, color, game, position):
-        super().__init__(color, game, position)
-        self.is_first_move = True
-
-    def direction_move(self):
-        return 1 if self.color == 0 else -1
+    def __init__(self, color, position):
+        super().__init__(color, position)
+        self.initial_position = position.copy()
 
     def available_moves(self):
-        # Pawn can move 1 on forward
-        new = Position(self.position.x, self.position.y + 1 * self.direction_move())
-        if self.game.can_move(color=self.color, position=new, only_empty=True):
-            yield new
+        # Pawn can move 1 (or 2 on first move) on forward
+        yield from self.generate_moves(
+            direction=Direction.up if self.color == Player.WHITE else Direction.down,
+            only_empty=True,
+            limit=2 if self.position == self.initial_position else 1
+        )
 
-        # Pawn can move 2 on forward first time
-        new = Position(self.position.x, self.position.y + 2 * self.direction_move())
-        if self.is_first_move and \
-            self.game.can_move(color=self.color, position=new, only_empty=True):
-            yield new
-
-        # Pawn can fight only 1 on diagonal
-        new = Position(self.position.x + 1, self.position.y + 1 * self.direction_move())
-        if self.game.can_move(color=self.color, position=new, only_opposite=True):
-            yield new
-
-        new = Position(self.position.x - 1, self.position.y + 1 * self.direction_move())
-        if self.game.can_move(color=self.color, position=new, only_opposite=True):
-            yield new
+        # Pawn can fight only 1 on forward diagonal
+        moves = [self.position + (Direction.up_left if self.color == Player.WHITE else Direction.down_left),
+                 self.position + (Direction.up_right if self.color == Player.WHITE else Direction.down_right)]
+        for new in moves:
+            if self.board.can_move(color=self.color, position=new, only_opposite=True):
+                yield new
         pass
-
-    def move(self, new_position):
-        super().move(new_position)
-        self.is_first_move = False
 
 
 class Horse(Figure):
-
     def available_moves(self):
         all_positions = [
             Position(self.position.x+1, self.position.y+2),
@@ -73,23 +79,46 @@ class Horse(Figure):
             Position(self.position.x-1, self.position.y+2)
         ]
         for new in all_positions:
-            if self.game.can_move(color=self.color, position=new):
+            if self.board.can_move(color=self.color, position=new):
                 yield new
         pass
 
 
 class Elephant(Figure):
-    pass
+    def available_moves(self):
+        yield from self.generate_moves(Direction.up_left)
+        yield from self.generate_moves(Direction.up_right)
+        yield from self.generate_moves(Direction.down_right)
+        yield from self.generate_moves(Direction.down_left)
 
 
 class Tower(Figure):
-    pass
+    def available_moves(self):
+        yield from self.generate_moves(Direction.up)
+        yield from self.generate_moves(Direction.right)
+        yield from self.generate_moves(Direction.down)
+        yield from self.generate_moves(Direction.left)
 
 
 class Queen(Figure):
-    pass
+    def available_moves(self):
+        yield from self.generate_moves(Direction.up_left)
+        yield from self.generate_moves(Direction.up_right)
+        yield from self.generate_moves(Direction.down_right)
+        yield from self.generate_moves(Direction.down_left)
+        yield from self.generate_moves(Direction.up)
+        yield from self.generate_moves(Direction.right)
+        yield from self.generate_moves(Direction.down)
+        yield from self.generate_moves(Direction.left)
 
 
 class King(Figure):
-    pass
-
+    def available_moves(self):
+        yield from self.generate_moves(Direction.up_left, limit=1)
+        yield from self.generate_moves(Direction.up_right, limit=1)
+        yield from self.generate_moves(Direction.down_right, limit=1)
+        yield from self.generate_moves(Direction.down_left, limit=1)
+        yield from self.generate_moves(Direction.up, limit=1)
+        yield from self.generate_moves(Direction.right, limit=1)
+        yield from self.generate_moves(Direction.down, limit=1)
+        yield from self.generate_moves(Direction.left, limit=1)
