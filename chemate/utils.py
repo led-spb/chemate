@@ -9,6 +9,10 @@ class Position(object):
     def copy(self):
         return Position(self.x, self.y)
 
+    @property
+    def index(self):
+        return self.y*8 + self.x
+
     def __add__(self, other):
         return Position(self.x + other.x, self.y + other.y)
 

@@ -1,9 +1,9 @@
 class Player(object):
-    WHITE = 0
-    BLACK = 1
+    WHITE = True
+    BLACK = False
 
-    def __init__(self, game, color, name):
-        self.game = game
+    def __init__(self, board, color, name):
+        self.board = board
         self.color = color
         self.name = name
 
@@ -12,4 +12,8 @@ class Player(object):
         Get all figures, owned by the player
         :return:
         """
-        return filter(lambda item: item.color == self.color, self.game.figures())
+        return filter(lambda item: item.color == self.color, self.board.figures())
+
+    def make_move(self):
+        pass
+

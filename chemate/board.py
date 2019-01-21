@@ -1,5 +1,4 @@
-import json
-from chemate.figure import Pawn, Tower, Horse, Elephant, Queen, King
+from chemate.figure import Pawn, Rook, Knight, Bishop, Queen, King
 from chemate.player import Player
 from chemate.utils import Position
 
@@ -10,46 +9,70 @@ class Board(object):
         self.clear()
         pass
 
+    def print(self):
+        """
+        Print current state of the board for debug
+        :return: None
+        """
+        for y in range(7, -1, -1):
+            print(
+                "".join(
+                    ["_" if self.board[y*8 + x] is None else self.board[y*8 + x].char
+                     for x in range(0, 8, 1)]
+                )
+            )
+            pass
+        pass
+
     def clear(self):
+        """
+        Clears the board
+        :return: None
+        """
         self.board = [None for x in range(64)]
+
+    def copy(self):
+        """
+        Return full copy the current board
+        :return: Board object
+        """
+        new_board = self.__class__()
+        new_board.put_figures(map(lambda x: x.copy(), self.figures()))
+        return new_board
 
     def initial_position(self):
+        """
+        Generate initial state of board
+        :return: None
+        """
         self.board = [None for x in range(64)]
-        # Pawns
-        for i in range(8):
-            self.put_figure(Pawn(Player.WHITE, Position(i, 1)))
-            self.put_figure(Pawn(Player.BLACK, Position(i, 6)))
-        # Towers
-        for i in range(0, 8, 7):
-            self.put_figure(Tower(Player.WHITE, Position(i, 0)))
-            self.put_figure(Tower(Player.BLACK, Position(i, 7)))
-        # Horses
-        for i in range(1, 7, 5):
-            self.put_figure(Horse(Player.WHITE, Position(i, 0)))
-            self.put_figure(Horse(Player.BLACK, Position(i, 7)))
-        # Elephants
-        for i in range(2, 6, 3):
-            self.put_figure(Elephant(Player.WHITE, Position(i, 0)))
-            self.put_figure(Elephant(Player.BLACK, Position(i, 7)))
-        # Queens
-        self.put_figure(Queen(Player.WHITE, Position(3, 0)))
-        self.put_figure(Queen(Player.BLACK, Position(3, 7)))
-        # Kings
-        self.put_figure(King(Player.WHITE, Position(4, 0)))
-        self.put_figure(King(Player.BLACK, Position(4, 7)))
+        self.put_figures(self.default_figures(Player.WHITE))
+        self.put_figures(self.default_figures(Player.BLACK))
 
-    @property
-    def state(self):
+    @staticmethod
+    def default_figures(color):
         """
-        Return current state of game
-        :return: Dictionary object with next structure:
-        players: tuple with two items: (white player name, black player name)
-        moves: list of moves
-        board:
-        status:
-s        message:
+        Generate all figures of specified color in default positions
+        :param color: Color of the figures
+        :return: Iterator for Figure instances
         """
-        return {}
+        # Pawns
+        for x in range(0, 8, 1):
+            yield Pawn(color, Position(x, 1 if color == Player.WHITE else 6))
+        # Towers
+        for x in range(0, 8, 7):
+            yield Rook(color, Position(x, 0 if color == Player.WHITE else 7))
+        # Horses
+        for x in range(1, 7, 5):
+            yield Knight(color, Position(x, 0 if color == Player.WHITE else 7))
+        # Elephants
+        for x in range(2, 6, 3):
+            yield Bishop(color, Position(x, 0 if color == Player.WHITE else 7))
+        # Queen
+        yield Queen(color, Position(3, 0 if color == Player.WHITE else 7))
+        # King
+        yield King(color, Position(4, 0 if color == Player.WHITE else 7))
+        pass
 
     def put_figure(self, figure):
         """
@@ -59,6 +82,25 @@ s        message:
         self.board[figure.position.y*8 + figure.position.x] = figure
         figure.board = self
         pass
+
+    def move_figure(self, from_pos, to_pos):
+        """
+        Move figure to the new location
+        :param from_pos:
+        :param to_pos:
+        :return: None
+        """
+        figure = self.board[from_pos.index]
+        self.board[from_pos.index] = None
+        self.board[to_pos.index] = figure
+
+    def put_figures(self, it):
+        """
+        Put all figures on the board from iterator
+        :param it:
+        :return: None
+        """
+        list(map(self.put_figure, it))
 
     def figures(self):
         """
@@ -83,8 +125,8 @@ s        message:
         if position.x > 7 or position.x < 0 or position.y > 7 or position.y < 0:
             return False
 
-        # Check fot target of move
-        figure = self.board[position.y*8 + position.x]
+        # Check for target of move
+        figure = self.board[position.index]
         if figure is None:
             return not only_opposite
 

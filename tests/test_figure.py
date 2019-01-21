@@ -11,18 +11,40 @@ def init_board():
     yield board
 
 
+class TestFigure(object):
+    def test_copy(self):
+        """
+        Testing copy figure, after copy new and old must be different objects
+        :return:
+        """
+        board1 = Board()
+        board2 = Board()
+        p1 = Pawn(Player.WHITE, Position(3, 3))
+        board1.put_figure(p1)
+
+        p2 = p1.copy()
+        board2.put_figure(p2)
+        assert p1 == p2
+
+        p1.move(Position(3, 4))
+        assert p1 != p2
+
+
 class TestPawn(object):
     def test_first_move(self, board):
         # White pawn can move 2 on up at first
         p1 = Pawn(Player.WHITE, Position(3, 1))
         board.put_figure(p1)
-
+        print()
+        board.print()
         moves = list(p1.available_moves())
         assert len(moves) == 2
         assert Position(3, 2) in moves and Position(3, 3) in moves
 
         # After this only one
         p1.move(Position(3, 2))
+        print()
+        board.print()
         moves = list(p1.available_moves())
         assert len(moves) == 1
         assert Position(3, 3) in moves
@@ -30,11 +52,16 @@ class TestPawn(object):
         # Black pawn can move 2 on down
         p2 = Pawn(Player.BLACK, Position(1, 6))
         board.put_figure(p2)
+        print()
+        board.print()
 
         moves = list(p2.available_moves())
         assert Position(1, 5) in moves and Position(1, 4) in moves
 
         p2.move(Position(1, 4))
+        print()
+        board.print()
+
         moves = list(p2.available_moves())
         assert len(moves) == 1
         assert Position(1, 3) in moves
@@ -62,6 +89,9 @@ class TestPawn(object):
         board.put_figure(p2)
         board.put_figure(p3)
         board.put_figure(p4)
+
+        print()
+        board.print()
 
         moves = list(p1.available_moves())
         assert len(moves) == 1
