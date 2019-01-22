@@ -56,12 +56,16 @@ class Figure(object):
         """
         position = Position(self.position.x, self.position.y)
         for i in itertools.count():
+            if i >= limit:
+                break
             position = position + direction
-            if i < limit and self.board.can_move(color=self.color, position=position, only_empty=only_empty):
+            check = self.board.check_position(color=self.color, position=position)
+            if check >= 0 and check != 1 and (not only_empty or check == 0):
                 yield position
+                if check == 2:
+                    break
             else:
                 break
-        #return movements
         pass
 
 
@@ -78,7 +82,7 @@ class Pawn(Figure):
         moves = [self.position + (Direction.up_left if self.color == Player.WHITE else Direction.down_left),
                  self.position + (Direction.up_right if self.color == Player.WHITE else Direction.down_right)]
         for new in moves:
-            if self.board.can_move(color=self.color, position=new, only_opposite=True):
+            if self.board.check_position(color=self.color, position=new) == 2:
                 yield new
         pass
 
@@ -101,7 +105,8 @@ class Knight(Figure):
             Position(self.position.x-1, self.position.y+2)
         ]
         for new in all_positions:
-            if self.board.can_move(color=self.color, position=new):
+            check = self.board.check_position(color=self.color, position=new)
+            if check >= 0 and check > 1:
                 yield new
         pass
 

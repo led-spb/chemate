@@ -9,7 +9,7 @@ class TestBoard(object):
         board = Board()
         board.initial_position()
         print()
-        board.print()
+        print(board)
 
         assert len(list(board.figures())) == 32
 
@@ -41,8 +41,8 @@ class TestBoard(object):
         board = Board()
         board.initial_position()
         board.make_move(Position.char('e2'), Position.char('e4'))
-        board.print()
+        print(board)
         assert len(board.moves) == 1
         board.rollback_move()
-        board.print()
+        print(board)
         assert len(board.moves) == 0

@@ -36,7 +36,7 @@ class TestPawn(object):
         p1 = Pawn(Player.WHITE, Position.char('d2'))
         board.put_figure(p1)
         print()
-        board.print()
+        print(board)
         moves = list(p1.available_moves())
         assert len(moves) == 2
         assert Position.char('d3') in moves and Position.char('d4') in moves
@@ -44,7 +44,7 @@ class TestPawn(object):
         # After this only one
         p1.move(Position(3, 2))
         print()
-        board.print()
+        print(board)
         moves = list(p1.available_moves())
         assert len(moves) == 1
         assert Position(3, 3) in moves
@@ -53,14 +53,14 @@ class TestPawn(object):
         p2 = Pawn(Player.BLACK, Position(1, 6))
         board.put_figure(p2)
         print()
-        board.print()
+        print(board)
 
         moves = list(p2.available_moves())
         assert Position(1, 5) in moves and Position(1, 4) in moves
 
         p2.move(Position(1, 4))
         print()
-        board.print()
+        print(board)
 
         moves = list(p2.available_moves())
         assert len(moves) == 1
@@ -91,7 +91,7 @@ class TestPawn(object):
         board.put_figure(p4)
 
         print()
-        board.print()
+        print(board)
 
         moves = list(p1.available_moves())
         assert len(moves) == 1
@@ -121,3 +121,24 @@ class TestKnight(object):
             assert len(board.moves) == 1
             board.rollback_move()
             assert len(board.moves) == 0
+
+
+class TestRook(object):
+    def test_fight_blocked(self):
+        board = Board()
+        rook = Rook(Player.WHITE, Position.char('A3'))
+        pawn = Pawn(Player.BLACK, Position.char('B3'))
+        p2 = Knight(Player.WHITE, Position.char('A5'))
+        bishop = Bishop(Player.BLACK, Position.char('H3'))
+
+        board.put_figures([rook, pawn, p2, bishop])
+
+        print()
+        print(board)
+        for pos in rook.available_moves():
+            rook.move(pos)
+            print()
+            print(board)
+            assert pos != Position.char('C3')
+            assert pos != Position.char('A5')
+            board.rollback_move()

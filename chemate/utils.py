@@ -12,9 +12,6 @@ class Position(object):
         y = int(value[1])-1
         return cls(x, y)
 
-    # def copy(self):
-    #     return Position(self.x, self.y)
-
     @property
     def index(self):
         return self.y*8 + self.x

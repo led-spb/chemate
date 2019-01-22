@@ -24,20 +24,21 @@ class Board(object):
         self.moves = []
         pass
 
-    def print(self):
+    def __str__(self):
         """
-        Print current state of the board for debug
+        Current state of the board for debug
         :return: None
         """
-        for y in range(7, -1, -1):
-            print(
-                "".join(
-                    ["_" if self.board[y*8 + x] is None else self.board[y*8 + x].char
-                     for x in range(0, 8, 1)]
-                )
-            )
-            pass
-        pass
+        d = ["_" if self.board[i] is None else self.board[i].char for i in range(64)]
+        formated = [ "".join(d[i-7:i+1]) for i in list(reversed(range(64)))[::8]]
+        return "\n".join(formated)
+        """
+        return "\n".join(
+            ["".join(
+                    ["_" if self.board[y*8 + x] is None
+                     else self.board[y*8 + x].char
+                     for x in range(0, 8, 1)] for y in range(7, -1, -1))]
+        )"""
 
     def clear(self):
         """
@@ -45,15 +46,6 @@ class Board(object):
         :return: None
         """
         self.board = [None for x in range(64)]
-
-    def copy(self):
-        """
-        Return full copy the current board
-        :return: Board object
-        """
-        new_board = self.__class__()
-        new_board.put_figures(map(lambda x: x.copy(), self.figures()))
-        return new_board
 
     def initial_position(self):
         """
@@ -152,23 +144,24 @@ class Board(object):
                 yield figure
         pass
 
-    def can_move(self, color, position, only_empty=False, only_opposite=False):
+    def check_position(self, color, position):
         """
-        Check for player can make the move
+        Check position
         :param color:
         :param position:
-        :param only_empty:
-        :param only_opposite:
-        :return: True if this move is allowed and False otherwise
+        :return: -1 - out of box
+                  0 - empty
+                  1 - own
+                  2 - opponent
         """
         # Move to positions out of box are ot allowed
         if position.x > 7 or position.x < 0 or position.y > 7 or position.y < 0:
-            return False
+            return -1
 
         # Check for target of move
         figure = self.board[position.index]
         if figure is None:
-            return not only_opposite
+            return 0
 
         # Can't move to same player's figure, otherwise we can
-        return figure.color != color and not only_empty
+        return 2 if figure.color != color else 1
