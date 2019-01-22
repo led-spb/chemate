@@ -6,8 +6,14 @@ class Position(object):
         self.x = x
         self.y = y
 
-    def copy(self):
-        return Position(self.x, self.y)
+    @classmethod
+    def char(cls, value):
+        x = ord(value.lower()[0]) - ord('a')
+        y = int(value[1])-1
+        return cls(x, y)
+
+    # def copy(self):
+    #     return Position(self.x, self.y)
 
     @property
     def index(self):
@@ -17,7 +23,7 @@ class Position(object):
         return Position(self.x + other.x, self.y + other.y)
 
     def __str__(self):
-        return "%s%d" % (chr(ord('A') + self.x), self.y+1)
+        return "%s%d" % (chr(ord('a') + self.x), self.y+1)
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y

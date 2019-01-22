@@ -1,12 +1,27 @@
 from chemate.figure import Pawn, Rook, Knight, Bishop, Queen, King
 from chemate.player import Player
 from chemate.utils import Position
+from collections import namedtuple
+
+
+BaseMovement = namedtuple('BaseMovement', ['figure', 'from_pos', 'to_pos', 'taken_figure'])
+
+
+class Movement(BaseMovement):
+    def __str__(self):
+        return "%s%s%s%s" % (
+            '' if isinstance(self.figure, Pawn) else self.figure.char.upper(),
+            str(self.from_pos),
+            '-' if self.taken_figure is None else 'x',
+            str(self.to_pos)
+        )
 
 
 class Board(object):
     def __init__(self):
         self.board = None
         self.clear()
+        self.moves = []
         pass
 
     def print(self):
@@ -91,7 +106,7 @@ class Board(object):
         """
         return self.board[position.index]
 
-    def move_figure(self, from_pos, to_pos):
+    def make_move(self, from_pos, to_pos):
         """
         Move figure to the new location
         :param from_pos:
@@ -99,8 +114,25 @@ class Board(object):
         :return: None
         """
         figure = self.board[from_pos.index]
+        taken = self.board[to_pos.index]
+
+        self.moves.append(
+            Movement(
+                figure=figure,
+                from_pos=from_pos,
+                to_pos=to_pos,
+                taken_figure=taken
+            )
+        )
         self.board[from_pos.index] = None
         self.board[to_pos.index] = figure
+        figure.position = to_pos
+
+    def rollback_move(self):
+        last_move = self.moves.pop()
+        self.board[last_move.from_pos.index] = last_move.figure
+        self.board[last_move.to_pos.index] = last_move.taken_figure
+        last_move.figure.position = last_move.from_pos
 
     def put_figures(self, it):
         """

@@ -36,3 +36,13 @@ class TestBoard(object):
         assert len(list(filter(lambda x: isinstance(x, King) and x.color == Player.WHITE, board.figures()))) == 1
         assert len(list(filter(lambda x: isinstance(x, King) and x.color == Player.BLACK, board.figures()))) == 1
         pass
+
+    def test_board_move(self):
+        board = Board()
+        board.initial_position()
+        board.make_move(Position.char('e2'), Position.char('e4'))
+        board.print()
+        assert len(board.moves) == 1
+        board.rollback_move()
+        board.print()
+        assert len(board.moves) == 0

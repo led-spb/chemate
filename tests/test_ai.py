@@ -1,15 +1,23 @@
 from chemate.player import Player
 from chemate.board import Board
 from chemate.ai import DecisionTree
+import pytest
 
 
 class TestAI(object):
+    # @pytest.mark.skip
     def test_select_move(self):
         board = Board()
         board.initial_position()
 
-        decision = DecisionTree(Player.WHITE, board, 0, 1)
-        move = decision.next_move()
+        decision = DecisionTree(board=board, max_level=2*2)
+        color = Player.WHITE
+        for i in range(8):
+            estimate = decision.next_move(color)
 
-        print("Estimate: %.2f" % move.estimate)
-        move.decision.board.print()
+            print()
+            print("%d: %s (%.2f)" % (i+1, str(decision.best_move), estimate))
+            decision.best_move.figure.move(decision.best_move.to_pos)
+            board.print()
+
+            color = not color

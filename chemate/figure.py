@@ -8,16 +8,20 @@ class Figure(object):
         self.color = color
         self.board = None
         self.position = position
-        self.is_moved = False
+        # self.initial_position = position.copy()
+        self.initial_position = Position(position.x, position.y)
 
     @property
     def char(self):
         return ' '
 
+    @property
+    def is_moved(self):
+        return self.position != self.initial_position
+
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
                and self.color == other.color \
-               and self.is_moved == other.is_moved \
                and self.position == other.position
 
     def copy(self):
@@ -25,9 +29,7 @@ class Figure(object):
         Create exact copy of current figure
         :return:
         """
-        new = self.__class__(self.color, self.position)
-        new.is_moved = self.is_moved
-        return new
+        return self.__class__(self.color, self.position)
 
     def available_moves(self):
         """
@@ -42,10 +44,7 @@ class Figure(object):
         :param new_position:
         :return: None
         """
-        # if new_position in self.available_moves():
-        self.board.move_figure(from_pos=self.position, to_pos=new_position)
-        self.position = new_position.copy()
-        self.is_moved = True
+        self.board.make_move(from_pos=self.position, to_pos=new_position)
 
     def generate_moves(self, direction, only_empty=False, limit=8):
         """
@@ -55,13 +54,14 @@ class Figure(object):
         :param limit:
         :return: Iterator object with available positions
         """
-        position = self.position.copy()
+        position = Position(self.position.x, self.position.y)
         for i in itertools.count():
             position = position + direction
             if i < limit and self.board.can_move(color=self.color, position=position, only_empty=only_empty):
                 yield position
             else:
                 break
+        #return movements
         pass
 
 

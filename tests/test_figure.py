@@ -33,13 +33,13 @@ class TestFigure(object):
 class TestPawn(object):
     def test_first_move(self, board):
         # White pawn can move 2 on up at first
-        p1 = Pawn(Player.WHITE, Position(3, 1))
+        p1 = Pawn(Player.WHITE, Position.char('d2'))
         board.put_figure(p1)
         print()
         board.print()
         moves = list(p1.available_moves())
         assert len(moves) == 2
-        assert Position(3, 2) in moves and Position(3, 3) in moves
+        assert Position.char('d3') in moves and Position.char('d4') in moves
 
         # After this only one
         p1.move(Position(3, 2))
@@ -109,3 +109,15 @@ class TestPawn(object):
         assert len(moves) == 1
         assert Position(3, 3) in moves
         pass
+
+
+class TestKnight(object):
+    def test_move(self):
+        board = Board()
+        knight = Knight(Player.BLACK, Position.char('D5'))
+        board.put_figure(knight)
+        for pos in knight.available_moves():
+            knight.move(pos)
+            assert len(board.moves) == 1
+            board.rollback_move()
+            assert len(board.moves) == 0
