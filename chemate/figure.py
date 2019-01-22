@@ -42,10 +42,10 @@ class Figure(object):
         :param new_position:
         :return: None
         """
-        if new_position in self.available_moves():
-            self.board.move_figure(from_pos=self.position, to_pos=new_position)
-            self.position = new_position.copy()
-            self.is_moved = True
+        # if new_position in self.available_moves():
+        self.board.move_figure(from_pos=self.position, to_pos=new_position)
+        self.position = new_position.copy()
+        self.is_moved = True
 
     def generate_moves(self, direction, only_empty=False, limit=8):
         """

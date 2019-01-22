@@ -83,6 +83,14 @@ class Board(object):
         figure.board = self
         pass
 
+    def get_figure(self, position):
+        """
+        Get figure at specified location on board
+        :param position: Position on board
+        :return: Figure instance or None
+        """
+        return self.board[position.index]
+
     def move_figure(self, from_pos, to_pos):
         """
         Move figure to the new location

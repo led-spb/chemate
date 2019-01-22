@@ -3,9 +3,9 @@ from chemate.figure import *
 from chemate.player import Player
 
 
-class TestGame(object):
+class TestBoard(object):
 
-    def test_game_init(self):
+    def test_board_init(self):
         board = Board()
         board.initial_position()
         print()
