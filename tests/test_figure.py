@@ -32,39 +32,29 @@ class TestFigure(object):
 
 class TestPawn(object):
     def test_first_move(self, board):
-        # White pawn can move 2 on up at first
-        p1 = Pawn(Player.WHITE, Position.char('d2'))
+        # 1. White pawn can move 2 on up at first
+        p1 = Pawn(Player.WHITE, Position('d2'))
         board.put_figure(p1)
-        print()
-        print(board)
         moves = list(p1.available_moves())
         assert len(moves) == 2
-        assert Position.char('d3') in moves and Position.char('d4') in moves
+        assert Position('d3') in moves and Position('d4') in moves
 
-        # After this only one
-        p1.move(Position(3, 2))
-        print()
-        print(board)
+        # 2. After this only one
+        p1.move(Position('d3'))
         moves = list(p1.available_moves())
         assert len(moves) == 1
-        assert Position(3, 3) in moves
+        assert Position('d4') in moves
 
-        # Black pawn can move 2 on down
-        p2 = Pawn(Player.BLACK, Position(1, 6))
+        # 3. Black pawn can move 2 on down
+        p2 = Pawn(Player.BLACK, Position('b7'))
         board.put_figure(p2)
-        print()
-        print(board)
-
         moves = list(p2.available_moves())
-        assert Position(1, 5) in moves and Position(1, 4) in moves
+        assert Position('b6') in moves and Position('b5') in moves
 
-        p2.move(Position(1, 4))
-        print()
-        print(board)
-
+        p2.move(Position('b5'))
         moves = list(p2.available_moves())
         assert len(moves) == 1
-        assert Position(1, 3) in moves
+        assert Position('b4') in moves
 
     def test_blocked(self, board):
         # Blocked by end of board

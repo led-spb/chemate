@@ -22,6 +22,7 @@ class Board(object):
         self.board = None
         self.clear()
         self.moves = []
+        self.balance = 0
         pass
 
     def __str__(self):
@@ -30,15 +31,15 @@ class Board(object):
         :return: None
         """
         d = ["_" if self.board[i] is None else self.board[i].char for i in range(64)]
-        formated = [ "".join(d[i-7:i+1]) for i in list(reversed(range(64)))[::8]]
-        return "\n".join(formated)
+        formatted = [" ".join(d[i-7:i+1]) for i in list(reversed(range(64)))[::8]]
+        return "\n".join(formatted)
+
+    def __hash__(self):
         """
-        return "\n".join(
-            ["".join(
-                    ["_" if self.board[y*8 + x] is None
-                     else self.board[y*8 + x].char
-                     for x in range(0, 8, 1)] for y in range(7, -1, -1))]
-        )"""
+        Calculates hash for current position
+        :return:
+        """
+        return 0
 
     def clear(self):
         """
@@ -88,6 +89,7 @@ class Board(object):
         """
         self.board[figure.position.y*8 + figure.position.x] = figure
         figure.board = self
+        self.balance += figure.price
         pass
 
     def get_figure(self, position):
@@ -107,6 +109,8 @@ class Board(object):
         """
         figure = self.board[from_pos.index]
         taken = self.board[to_pos.index]
+        if taken is not None:
+            self.balance -= taken.price
 
         self.moves.append(
             Movement(
@@ -125,6 +129,8 @@ class Board(object):
         self.board[last_move.from_pos.index] = last_move.figure
         self.board[last_move.to_pos.index] = last_move.taken_figure
         last_move.figure.position = last_move.from_pos
+        if last_move.taken_figure is not None:
+            self.balance += last_move.taken_figure.price
 
     def put_figures(self, it):
         """
@@ -146,7 +152,7 @@ class Board(object):
 
     def check_position(self, color, position):
         """
-        Check position
+        Check specified position
         :param color:
         :param position:
         :return: -1 - out of box

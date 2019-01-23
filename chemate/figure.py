@@ -8,16 +8,15 @@ class Figure(object):
         self.color = color
         self.board = None
         self.position = position
-        # self.initial_position = position.copy()
-        self.initial_position = Position(position.x, position.y)
+        self._price = 1
 
     @property
     def char(self):
         return ' '
 
     @property
-    def is_moved(self):
-        return self.position != self.initial_position
+    def price(self):
+        return self._price * self.color
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
@@ -72,10 +71,11 @@ class Figure(object):
 class Pawn(Figure):
     def available_moves(self):
         # Pawn can move 1 (or 2 on first move) on forward
+        in_initial_pos = self.position.y == (1 if self.color == Player.WHITE else 6)
         yield from self.generate_moves(
             direction=Direction.up if self.color == Player.WHITE else Direction.down,
             only_empty=True,
-            limit=1 if self.is_moved else 2
+            limit=2 if in_initial_pos else 1
         )
 
         # Pawn can fight only 1 on forward diagonal
@@ -92,6 +92,11 @@ class Pawn(Figure):
 
 
 class Knight(Figure):
+
+    def __init__(self, color, position):
+        super().__init__(color, position)
+        self._price = 3
+
     def available_moves(self):
         all_positions = [
             Position(self.position.x+1, self.position.y+2),
@@ -116,6 +121,11 @@ class Knight(Figure):
 
 
 class Bishop(Figure):
+
+    def __init__(self, color, position):
+        super().__init__(color, position)
+        self._price = 3
+
     def available_moves(self):
         yield from self.generate_moves(Direction.up_left)
         yield from self.generate_moves(Direction.up_right)
@@ -128,6 +138,11 @@ class Bishop(Figure):
 
 
 class Rook(Figure):
+
+    def __init__(self, color, position):
+        super().__init__(color, position)
+        self._price = 5
+
     def available_moves(self):
         yield from self.generate_moves(Direction.up)
         yield from self.generate_moves(Direction.right)
@@ -140,6 +155,11 @@ class Rook(Figure):
 
 
 class Queen(Figure):
+
+    def __init__(self, color, position):
+        super().__init__(color, position)
+        self._price = 9
+
     def available_moves(self):
         yield from self.generate_moves(Direction.up_left)
         yield from self.generate_moves(Direction.up_right)
@@ -156,6 +176,11 @@ class Queen(Figure):
 
 
 class King(Figure):
+
+    def __init__(self, color, position):
+        super().__init__(color, position)
+        self._price = 0
+
     def available_moves(self):
         yield from self.generate_moves(Direction.up_left, limit=1)
         yield from self.generate_moves(Direction.up_right, limit=1)

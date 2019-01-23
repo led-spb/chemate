@@ -1,6 +1,6 @@
 class Player(object):
-    WHITE = True
-    BLACK = False
+    WHITE = 1
+    BLACK = -1
 
     def __init__(self, board, color, name):
         self.board = board
@@ -16,4 +16,3 @@ class Player(object):
 
     def make_move(self):
         pass
-

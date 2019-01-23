@@ -10,5 +10,5 @@ def start():
     decision.next_move(True, 0)
 
 
-cProfile.run('start()', sort=0)
+cProfile.run('start()', sort=2)
 

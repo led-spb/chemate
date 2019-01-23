@@ -2,7 +2,14 @@
 class Position(object):
     __slots__ = ['x', 'y']
 
-    def __init__(self, x, y):
+    def __init__(self, *args):
+        if type(args[0]) == str:
+            value = args[0]
+            x = ord(value.lower()[0]) - ord('a')
+            y = int(value[1]) - 1
+        else:
+            x = args[0]
+            y = args[1]
         self.x = x
         self.y = y
 
@@ -27,12 +34,12 @@ class Position(object):
 
 
 class Direction(object):
-    up = Position(x=0, y=1)
-    down = Position(x=0, y=-1)
-    left = Position(x=-1, y=0)
-    right = Position(x=1, y=0)
+    up = Position(0, 1)
+    down = Position(0, -1)
+    left = Position(-1, 0)
+    right = Position(1, 0)
 
-    up_left = Position(x=-1, y=1)
-    up_right = Position(x=1, y=1)
-    down_left = Position(x=-1, y=-1)
-    down_right = Position(x=1, y=-1)
+    up_left = Position(-1, 1)
+    up_right = Position(1, 1)
+    down_left = Position(-1, -1)
+    down_right = Position(1, -1)
