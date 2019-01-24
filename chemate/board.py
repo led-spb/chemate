@@ -30,7 +30,7 @@ class Board(object):
         Current state of the board for debug
         :return: None
         """
-        d = ["_" if self.board[i] is None else self.board[i].char for i in range(64)]
+        d = ["." if self.board[i] is None else self.board[i].char for i in range(64)]
         formatted = [" ".join(d[i-7:i+1]) for i in list(reversed(range(64)))[::8]]
         return "\n".join(formatted)
 

@@ -111,7 +111,7 @@ class Knight(Figure):
         ]
         for new in all_positions:
             check = self.board.check_position(color=self.color, position=new)
-            if check >= 0 and check > 1:
+            if check == 0 or check == 2:
                 yield new
         pass
 
@@ -179,7 +179,7 @@ class King(Figure):
 
     def __init__(self, color, position):
         super().__init__(color, position)
-        self._price = 0
+        self._price = 90
 
     def available_moves(self):
         yield from self.generate_moves(Direction.up_left, limit=1)

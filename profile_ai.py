@@ -7,7 +7,7 @@ def start():
     board = Board()
     board.initial_position()
     decision = DecisionTree(board, 4)
-    decision.next_move(True, 0)
+    decision.best_move(True, 0)
 
 
 cProfile.run('start()', sort=2)

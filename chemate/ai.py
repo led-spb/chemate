@@ -1,66 +1,83 @@
 from chemate.player import Player
 from chemate.utils import Position
+from chemate.image.draw import Draw
 import random
 
 
 class DecisionTree(object):
     def __init__(self, board, max_level):
         self.board = board
-        self.max_level = max_level
         self.best_moves = None
+        self.max_level = max_level
         self._central = [Position('d4'), Position('e4'), Position('d5'), Position('e5')]
         pass
 
-    def next_move(self, color, level=0, alpha=-1000, beta=1000):
+    def best_move(self, color, depth=None, draw=None):
+        """
+        :param color:
+        :param depth:
+        :return: Movement object
+        """
+        depth = depth or self.max_level
+        best_move = None
+        best_score = -9999 if color == Player.WHITE else 9999
+
+        for figure in filter(lambda x: x.color == color, self.board.figures()):
+            for new_position in figure.available_moves():
+                if draw is not None:
+                    draw.draw_move_variant(figure.position, new_position)
+
+                figure.move(new_position)
+                score = self.mini_max(-color, depth-1, -10000, 10000)
+
+                if draw is not None:
+                    draw.draw_estimate(new_position, score)
+                if (color == Player.WHITE and score > best_score) \
+                        or (color == Player.BLACK and score < best_score):
+                    best_move = self.board.moves[-1]
+                    best_score = score
+                self.board.rollback_move()
+
+        return best_move, best_score
+
+    def mini_max(self, color, depth, alpha, beta):
         """
         Main method for computer chess
         Make the best mevement for current
-        :return:
+        :return: Estimated position cost
         """
-        best_moves = []
-        min_max = None
-
-        if level >= self.max_level:
+        # At leaf return estimate
+        if depth == 0:
             return self.estimate()
 
-        # 1. Generate all available movements in current position
+        best_score = -9999 if color == Player.WHITE else 9999
+
+        # Generate all available movements in current position
         for figure in filter(lambda x: x.color == color, self.board.figures()):
             for new_position in figure.available_moves():
-                # 2. Make the ours movement
+                # Move own figure
                 figure.move(new_position)
-
-                # 3. Make the best movement for opponent
-                # return estimate and then rollback
-                current_estimate = self.next_move(-color, level+1, alpha, beta)
-                # 4. If current estimate is best then save this movement
-                if min_max is None or \
-                        (color == Player.WHITE and current_estimate >= min_max) or \
-                        (color == Player.BLACK and current_estimate <= min_max):
-                    if min_max != current_estimate:
-                        best_moves = []
-                    min_max = current_estimate
-                    best_moves.append(self.board.moves[-1])
-
-                # 4. Rollback ours movement
+                # Make opponent's move and check the position estimate
+                score = self.mini_max(-color, depth-1, alpha, beta)
+                # Rollback own movement
                 self.board.rollback_move()
 
-                # 5. Don't search for already bad movements
                 if color == Player.WHITE:
-                    if alpha is None or current_estimate > alpha:
-                        alpha = current_estimate
+                    # We need select a move with max estimate
+                    if score > best_score:
+                        best_score = score
+                    if best_score > alpha:
+                        alpha = best_score
                 else:
-                    if beta is None or current_estimate < beta:
-                        beta = current_estimate
+                    # else select a move with min estimate
+                    if score < best_score:
+                        best_score = score
+                    if best_score < beta:
+                        beta = best_score
 
                 if beta <= alpha:
-                    return min_max
-        if level == 0:
-            self.best_moves = best_moves
-
-        if min_max is None:
-            # No available moves
-            return 1000 * color
-        return min_max
+                    return best_score
+        return best_score
 
     def estimate(self):
         """
@@ -70,12 +87,11 @@ class DecisionTree(object):
         # Estimate quality position
         quality_estimate = self.board.balance
 
-        position_estimate = 0.0
+        position_estimate = 0
         # Position estimate if quality is equal
         if quality_estimate == 0:
             for pos in self._central:
                 fig = self.board.get_figure(pos)
                 if fig is not None:
-                    position_estimate += 0.05 * fig.color
-
-        return quality_estimate + position_estimate
+                    position_estimate += fig.price*0.5
+        return quality_estimate + position_estimate + (random.random()-0.5)

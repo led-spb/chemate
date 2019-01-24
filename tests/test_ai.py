@@ -2,40 +2,46 @@ from chemate.figure import *
 from chemate.utils import Position
 from chemate.board import Board
 from chemate.ai import DecisionTree
+from chemate.image.draw import Draw
 import random
 import pytest
-
+from wand.image import Image
 
 class TestAI(object):
 
     @staticmethod
     def make_moves(board, decision, color, count):
+        gif = Image()
+
         for i in range(count):
-            estimate = decision.next_move(color)
+            drw = Draw()
+            move, estimate = decision.best_move(color, draw=drw)
 
-            assert len(decision.best_moves) > 0
-
-            move = random.choice(decision.best_moves)
             move.figure.move(move.to_pos)
-
             print()
             print(
                 "%d: %s %s (%.2f)" %
                 (i + 1, 'white' if color == Player.WHITE else 'black', str(move), estimate)
             )
-
             print(str(board))
             color = -color
+            drw.draw_board(board)
+
+            img = drw.image
+            gif.sequence.append(drw.image)
+            gif.sequence[-1].delay = 300
+
+        gif.type = 'optimize'
+        gif.save(filename='moves.gif')
 
     # @pytest.mark.skip
     def test_select_move(self):
         board = Board()
 
         board.initial_position()
-        decision = DecisionTree(board=board, max_level=4)
-        assert decision.estimate() == 0
-
-        self.make_moves(board, decision, Player.WHITE, 20)
+        decision = DecisionTree(board=board, max_level=5)
+        assert abs(decision.estimate()) <= 0.5
+        self.make_moves(board, decision, Player.WHITE, 10)
 
     def test_case_1(self):
         board = Board()
