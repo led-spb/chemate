@@ -3,19 +3,18 @@ from chemate.utils import Position
 from chemate.board import Board
 from chemate.ai import DecisionTree
 from chemate.image.draw import Draw
-import random
 import pytest
-from wand.image import Image
 
-class TestAI(object):
+
+class TestDecision(object):
 
     @staticmethod
     def make_moves(board, decision, color, count):
-        gif = Image()
+        #gif = Image()
 
         for i in range(count):
             drw = Draw()
-            move, estimate = decision.best_move(color, draw=drw)
+            move, estimate = decision.best_move(color, debug=None)
 
             move.figure.move(move.to_pos)
             print()
@@ -26,23 +25,18 @@ class TestAI(object):
             print(str(board))
             color = -color
             drw.draw_board(board)
+            drw.image.save(filename='move_%02d.png' % i)
 
-            img = drw.image
-            gif.sequence.append(drw.image)
-            gif.sequence[-1].delay = 300
-
-        gif.type = 'optimize'
-        gif.save(filename='moves.gif')
-
-    # @pytest.mark.skip
-    def test_select_move(self):
+    #@pytest.mark.skip
+    def test_game(self):
         board = Board()
 
         board.initial_position()
-        decision = DecisionTree(board=board, max_level=5)
+        decision = DecisionTree(board=board, max_level=3)
         assert abs(decision.estimate()) <= 0.5
-        self.make_moves(board, decision, Player.WHITE, 10)
+        self.make_moves(board, decision, Player.WHITE, 30)
 
+    @pytest.mark.skip
     def test_case_1(self):
         board = Board()
         q = [
@@ -54,12 +48,13 @@ class TestAI(object):
             Bishop(Player.BLACK, Position('d8'))
         ]
         board.put_figures(q)
-        decision = DecisionTree(board=board, max_level=2*2)
+        decision = DecisionTree(board=board, max_level=3)
 
         print("0: (%.2f)" % decision.estimate())
         print(str(board))
-        self.make_moves(board, decision, Player.WHITE, 6)
+        self.make_moves(board, decision, Player.WHITE, 8)
 
+    @pytest.mark.skip
     def test_case_2(self):
         board = Board()
         q = [
@@ -74,12 +69,11 @@ class TestAI(object):
 
         self.make_moves(board, decision, Player.WHITE, 1)
 
+    @pytest.mark.skip
     def test_case_3(self):
         board = Board()
         q = [
             Queen(Player.WHITE, Position('b6')),
-
-           # Pawn(Player.BLACK, Position('h6')),
             Rook(Player.BLACK, Position('a6')),
         ]
         board.put_figures(q)
@@ -89,7 +83,8 @@ class TestAI(object):
         print(str(board))
         self.make_moves(board, decision, Player.WHITE, 1)
 
-    def test_case_3(self):
+    @pytest.mark.skip
+    def test_case_4(self):
         board = Board()
         q = [
             Bishop(Player.WHITE, Position('e8')),

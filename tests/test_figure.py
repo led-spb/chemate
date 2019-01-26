@@ -2,13 +2,6 @@ from chemate.figure import *
 from chemate.player import Player
 from chemate.board import Board
 from chemate.utils import *
-from pytest import fixture
-
-
-@fixture(name="board")
-def init_board():
-    board = Board()
-    yield board
 
 
 class TestFigure(object):
@@ -31,7 +24,9 @@ class TestFigure(object):
 
 
 class TestPawn(object):
-    def test_first_move(self, board):
+    def test_first_move(self):
+        board = Board()
+
         # 1. White pawn can move 2 on up at first
         p1 = Pawn(Player.WHITE, Position('d2'))
         board.put_figure(p1)
@@ -56,7 +51,9 @@ class TestPawn(object):
         assert len(moves) == 1
         assert Position('b4') in moves
 
-    def test_blocked(self, board):
+    def test_blocked(self):
+        board = Board()
+
         # Blocked by end of board
         p1 = Pawn(Player.WHITE, Position(1, 7))
         board.put_figure(p1)

@@ -12,7 +12,7 @@ class Figure(object):
 
     @property
     def char(self):
-        return ' '
+        return '.'
 
     @property
     def price(self):
@@ -50,7 +50,7 @@ class Figure(object):
         Generate continues moves in direction from current position
         :param direction:
         :param only_empty:
-        :param limit:
+        :param limit: check only first moves in this direction
         :return: Iterator object with available positions
         """
         position = Position(self.position.x, self.position.y)
@@ -59,9 +59,9 @@ class Figure(object):
                 break
             position = position + direction
             check = self.board.check_position(color=self.color, position=position)
-            if check >= 0 and check != 1 and (not only_empty or check == 0):
+            if check <= 1 and (not only_empty or check == 0):
                 yield position
-                if check == 2:
+                if check == 1:
                     break
             else:
                 break
@@ -82,7 +82,7 @@ class Pawn(Figure):
         moves = [self.position + (Direction.up_left if self.color == Player.WHITE else Direction.down_left),
                  self.position + (Direction.up_right if self.color == Player.WHITE else Direction.down_right)]
         for new in moves:
-            if self.board.check_position(color=self.color, position=new) == 2:
+            if self.board.check_position(color=self.color, position=new) == 1:
                 yield new
         pass
 
@@ -111,7 +111,7 @@ class Knight(Figure):
         ]
         for new in all_positions:
             check = self.board.check_position(color=self.color, position=new)
-            if check == 0 or check == 2:
+            if check <= 1:
                 yield new
         pass
 

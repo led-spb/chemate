@@ -39,7 +39,9 @@ class Board(object):
         Calculates hash for current position
         :return:
         """
-        return 0
+        lst = ['.' if x is None else x.char for x in self.board]
+        s = ''.join(lst)
+        return s.__hash__()
 
     def clear(self):
         """
@@ -125,6 +127,10 @@ class Board(object):
         figure.position = to_pos
 
     def rollback_move(self):
+        """
+        Rollback last move
+        :return: None
+        """
         last_move = self.moves.pop()
         self.board[last_move.from_pos.index] = last_move.figure
         self.board[last_move.to_pos.index] = last_move.taken_figure
@@ -155,14 +161,14 @@ class Board(object):
         Check specified position
         :param color:
         :param position:
-        :return: -1 - out of box
-                  0 - empty
-                  1 - own
-                  2 - opponent
+        :return: 0 - empty
+                 1 - opponent figure
+                 2 - own figure
+                 3 - out of box
         """
         # Move to positions out of box are ot allowed
         if position.x > 7 or position.x < 0 or position.y > 7 or position.y < 0:
-            return -1
+            return 3
 
         # Check for target of move
         figure = self.board[position.index]
@@ -170,4 +176,48 @@ class Board(object):
             return 0
 
         # Can't move to same player's figure, otherwise we can
-        return 2 if figure.color != color else 1
+        return 1 if figure.color != color else 2
+
+    def all_moves(self, color=None, taken_only=False):
+        """
+        Return list of available moves without
+        :param color:
+        :param taken_only:
+        :return: Iterator object
+        """
+        for figure in self.board:
+            if figure is not None and (color is None or figure.color == color):
+                for pos in figure.available_moves():
+                    taken = self.get_figure(pos)
+                    if taken is not None or not taken_only:
+                        yield Movement(figure, figure.position, pos, taken)
+        pass
+
+    def legal_moves(self, color):
+        """
+        Return only legal moves for player
+        :param color: player color
+        :return: list of Movement object
+        """
+        our_moves = list(self.all_moves(color))
+
+        is_check = False
+        for opp_move in self.all_moves(color=-color, taken_only=True):
+            if isinstance(opp_move.taken_figure, King):
+                is_check = True
+                break
+        if not is_check:
+            return our_moves
+
+        legal_moves = []
+        for m in our_moves:
+            self.make_move(m.from_pos, m.to_pos)
+            is_legal_move = True
+            for he_move in self.all_moves(color=-color, taken_only=True):
+                if isinstance(he_move.taken_figure, King):
+                    is_legal_move = False
+                    break
+            if is_legal_move:
+                legal_moves.append(m)
+            self.rollback_move()
+        return legal_moves

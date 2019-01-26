@@ -46,3 +46,30 @@ class TestBoard(object):
         board.rollback_move()
         print(board)
         assert len(board.moves) == 0
+
+    def test_checkmate(self):
+        board = Board()
+        fig = [
+            King(Player.WHITE, Position('h1')),
+            Pawn(Player.WHITE, Position('g2')),
+            Pawn(Player.WHITE, Position('h2')),
+            Bishop(Player.BLACK, Position('d4'))
+        ]
+        board.put_figures(fig)
+
+        # No check, no mate
+        moves = board.legal_moves(Player.WHITE)
+        assert len(moves) == 5
+
+        board.make_move(Position('h1'), Position('g1'))
+        moves = board.legal_moves(Player.WHITE)
+        # Check, no mate
+        assert len(moves) == 2
+
+        board.put_figure(Rook(Player.BLACK, Position('c1')))
+        moves = board.legal_moves(Player.WHITE)
+        assert len(moves) == 0
+
+        board.make_move(Position('h2'), Position('h3'))
+        moves = board.legal_moves(Player.WHITE)
+        assert len(moves) == 1
