@@ -92,7 +92,6 @@ class Pawn(Figure):
 
 
 class Knight(Figure):
-
     def __init__(self, color, position):
         super().__init__(color, position)
         self._price = 3
@@ -121,7 +120,6 @@ class Knight(Figure):
 
 
 class Bishop(Figure):
-
     def __init__(self, color, position):
         super().__init__(color, position)
         self._price = 3

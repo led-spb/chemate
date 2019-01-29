@@ -4,7 +4,6 @@ from chemate.player import Player
 
 
 class TestBoard(object):
-
     def test_board_init(self):
         board = Board()
         board.initial_position()

@@ -10,8 +10,6 @@ class TestDecision(object):
 
     @staticmethod
     def make_moves(board, decision, color, count):
-        #gif = Image()
-
         for i in range(count):
             drw = Draw()
             move, estimate = decision.best_move(color, debug=None)

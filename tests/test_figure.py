@@ -110,6 +110,29 @@ class TestKnight(object):
             assert len(board.moves) == 0
 
 
+class TestKing(object):
+    def test_move(self):
+        board = Board()
+        king = King(Player.WHITE, Position('c3'))
+        board.put_figure(king)
+        moves = board.legal_moves(Player.WHITE)
+        assert len(moves) == 8
+
+        king.move(Position('a1'))
+        moves = board.legal_moves(Player.WHITE)
+        assert len(moves) == 3
+
+
+class TestBishop(object):
+    def test_move(self):
+        pass
+
+
+class TestQueen(object):
+    def test_move(self):
+        pass
+
+
 class TestRook(object):
     def test_fight_blocked(self):
         board = Board()
@@ -120,12 +143,7 @@ class TestRook(object):
 
         board.put_figures([rook, pawn, p2, bishop])
 
-        print()
-        print(board)
         for pos in rook.available_moves():
-            rook.move(pos)
-            print()
-            print(board)
             assert pos != Position.char('C3')
             assert pos != Position.char('A5')
             board.rollback_move()
