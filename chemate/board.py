@@ -200,7 +200,7 @@ class Board(object):
         :return: list of Movement object
         """
         our_moves = list(self.all_moves(color))
-
+        """
         is_check = False
         for opp_move in self.all_moves(color=-color, taken_only=True):
             if isinstance(opp_move.taken_figure, King):
@@ -208,7 +208,7 @@ class Board(object):
                 break
         if not is_check:
             return our_moves
-
+        """
         legal_moves = []
         for m in our_moves:
             self.make_move(m.from_pos, m.to_pos)

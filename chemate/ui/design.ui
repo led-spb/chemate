@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>576</width>
-    <height>496</height>
+    <width>609</width>
+    <height>571</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -25,9 +25,15 @@
      <widget class="QGraphicsView" name="viewBoard">
       <property name="minimumSize">
        <size>
-        <width>256</width>
-        <height>256</height>
+        <width>512</width>
+        <height>512</height>
        </size>
+      </property>
+      <property name="renderHints">
+       <set>QPainter::Antialiasing|QPainter::TextAntialiasing</set>
+      </property>
+      <property name="dragMode">
+       <enum>QGraphicsView::NoDrag</enum>
       </property>
      </widget>
     </item>
@@ -51,7 +57,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>576</width>
+     <width>609</width>
      <height>21</height>
     </rect>
    </property>

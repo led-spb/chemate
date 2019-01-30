@@ -13,10 +13,6 @@ class Draw(object):
         self.cell_size = cell_size
         self.drw = Drawing()
         self.draw_cells()
-        self.unichars = dict(
-            zip("KQRBNPkqrbnp",
-                (chr(uc) for uc in range(0x2654, 0x2660)))
-        )
 
     @property
     def image(self):
@@ -47,7 +43,7 @@ class Draw(object):
         self.drw.text(
             figure.position.x * self.cell_size,
             8*self.cell_size - figure.position.y*self.cell_size - 6,
-            self.unichars[figure.char]
+            figure.unicode_char
         )
         self.drw.push()
         pass

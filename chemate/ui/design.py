@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'design.ui'
+# Form implementation generated from reading ui file 'chemate\ui\design.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.3
 #
@@ -11,14 +11,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(576, 496)
+        MainWindow.resize(609, 571)
         MainWindow.setMinimumSize(QtCore.QSize(0, 0))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.viewBoard = QtWidgets.QGraphicsView(self.centralwidget)
-        self.viewBoard.setMinimumSize(QtCore.QSize(256, 256))
+        self.viewBoard.setMinimumSize(QtCore.QSize(512, 512))
+        self.viewBoard.setRenderHints(QtGui.QPainter.Antialiasing|QtGui.QPainter.TextAntialiasing)
+        self.viewBoard.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         self.viewBoard.setObjectName("viewBoard")
         self.horizontalLayout.addWidget(self.viewBoard)
         self.listView = QtWidgets.QListView(self.centralwidget)
@@ -28,7 +30,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setEnabled(True)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 576, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 609, 21))
         self.menubar.setObjectName("menubar")
         self.menuGame = QtWidgets.QMenu(self.menubar)
         self.menuGame.setObjectName("menuGame")

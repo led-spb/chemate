@@ -4,6 +4,8 @@ import itertools
 
 
 class Figure(object):
+    _char_maps = dict(zip("KQRBNPkqrbnp", (chr(uc) for uc in range(0x2654, 0x2660))))
+
     def __init__(self, color, position):
         self.color = color
         self.board = None
@@ -13,6 +15,10 @@ class Figure(object):
     @property
     def char(self):
         return '.'
+
+    @property
+    def unicode_char(self):
+        return Figure._char_maps[self.char]
 
     @property
     def price(self):
