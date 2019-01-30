@@ -8,10 +8,11 @@ import sys
 
 
 class CellItem(QGraphicsItem):
-    def __init__(self, position, cell_size, parent=None):
+    def __init__(self, game, position, parent=None):
         self.position = position
+        self.game = game
         super().__init__(parent)
-        self.cell_size = cell_size
+        self.cell_size = game.cell_size
         self.setPos((position.index % 8) * self.cell_size, 7*self.cell_size - int(position.index / 8) * self.cell_size)
         self.setAcceptDrops(True)
 
@@ -40,10 +41,14 @@ class CellItem(QGraphicsItem):
         all_moves = event.mimeData().legal_moves
         for move in all_moves:
             if move.to_pos == self.position:
+                self.game.make_move(move)
+                """
                 to_pos = move.to_pos
                 from_pos = move.from_pos
 
-                from_item = self.scene().itemAt(from_pos.x*self.cell_size, 7*self.cell_size - from_pos.y*self.cell_size, QTransform())
+                from_item = self.scene().itemAt(
+                    from_pos.x*self.cell_size,
+                    7*self.cell_size - from_pos.y*self.cell_size, QTransform())
                 to_item = self.scene().itemAt(to_pos.x*self.cell_size, 7*self.cell_size - to_pos.y*64, QTransform())
 
                 if isinstance(to_item, FigureItem):
@@ -51,14 +56,15 @@ class CellItem(QGraphicsItem):
                 from_item.setPos(to_pos.x*self.cell_size, 7*self.cell_size - to_pos.y*self.cell_size)
 
                 move.figure.move(move.to_pos)
+                """
                 return
 
 
 class FigureItem(QGraphicsItem):
-    def __init__(self, figure, font, cell_size):
-        self.cell_size = cell_size
+    def __init__(self, game, figure):
+        self.cell_size = game.cell_size
         self.figure = figure
-        self.font = font
+        self.font = game.font
         self.figure_char = figure.unicode_char
         super(FigureItem, self).__init__()
 
@@ -135,11 +141,11 @@ class MainWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
 
     def init_board(self):
         for i in range(64):
-            cell = CellItem(Position(i % 8, int(i/8)), self.cell_size)
+            cell = CellItem(self, Position(i % 8, int(i/8)))
             self.scene.addItem(cell)
 
         for figure in self.board.figures():
-            item = FigureItem(figure, self.font, self.cell_size)
+            item = FigureItem(self, figure)
             self.scene.addItem(item)
         pass
 
@@ -151,6 +157,21 @@ class MainWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         self.viewBoard.setScene(self.scene)
         self.init_board()
         pass
+
+    def make_move(self, move):
+        to_pos = move.to_pos
+        from_pos = move.from_pos
+
+        from_item = self.scene.itemAt(
+            from_pos.x * self.cell_size,
+            7 * self.cell_size - from_pos.y * self.cell_size, QTransform())
+        to_item = self.scene.itemAt(to_pos.x * self.cell_size, 7 * self.cell_size - to_pos.y * 64, QTransform())
+
+        if isinstance(to_item, FigureItem):
+            self.scene.removeItem(to_item)
+        from_item.setPos(to_pos.x * self.cell_size, 7 * self.cell_size - to_pos.y * self.cell_size)
+
+        move.figure.move(move.to_pos)
 
 
 if __name__ == '__main__':
