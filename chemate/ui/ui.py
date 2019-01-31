@@ -1,10 +1,26 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsItem
 from PyQt5.QtGui import QFont, QFontDatabase, QDrag, QPainter, QPixmap, QTransform
-from PyQt5.QtCore import Qt, QMimeData, QRectF, QLineF, QPointF, QPoint
+from PyQt5.QtCore import Qt, QMimeData, QRectF, QLineF, QPointF, QPoint, QThread, pyqtSignal
 import chemate.ui.design
-from chemate.board import Board, Position
+from chemate.board import Board, Position, Player
+from chemate.ai import DecisionTree
 import chemate.figure
 import sys
+
+
+class DecisionThread(QThread):
+    def __init__(self, decision, color, parent=None):
+        super().__init__(parent)
+        self.decision = decision
+        self.color = color
+        self.move = None
+        self.score = None
+
+    def run(self):
+        try:
+            self.move, self.score = self.decision.best_move(self.color)
+        except Exception as e:
+            print(e)
 
 
 class CellItem(QGraphicsItem):
@@ -42,27 +58,13 @@ class CellItem(QGraphicsItem):
         for move in all_moves:
             if move.to_pos == self.position:
                 self.game.make_move(move)
-                """
-                to_pos = move.to_pos
-                from_pos = move.from_pos
-
-                from_item = self.scene().itemAt(
-                    from_pos.x*self.cell_size,
-                    7*self.cell_size - from_pos.y*self.cell_size, QTransform())
-                to_item = self.scene().itemAt(to_pos.x*self.cell_size, 7*self.cell_size - to_pos.y*64, QTransform())
-
-                if isinstance(to_item, FigureItem):
-                    self.scene().removeItem(to_item)
-                from_item.setPos(to_pos.x*self.cell_size, 7*self.cell_size - to_pos.y*self.cell_size)
-
-                move.figure.move(move.to_pos)
-                """
                 return
 
 
 class FigureItem(QGraphicsItem):
     def __init__(self, game, figure):
         self.cell_size = game.cell_size
+        self.game = game
         self.figure = figure
         self.font = game.font
         self.figure_char = figure.unicode_char
@@ -86,7 +88,9 @@ class FigureItem(QGraphicsItem):
         if QLineF(
                 QPointF(event.screenPos()),
                 QPointF(event.buttonDownScreenPos(Qt.LeftButton))
-        ).length() < QApplication.startDragDistance():
+        ).length() < QApplication.startDragDistance() \
+                or self.figure.color != self.game.human \
+                or self.game.turn != self.game.human:
             return
 
         legal_moves = [m for m in self.figure.board.legal_moves(self.figure.color) if m.figure == self.figure]
@@ -115,14 +119,17 @@ class FigureItem(QGraphicsItem):
         self.setCursor(Qt.OpenHandCursor)
 
 
-class MainWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
+class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
     def __init__(self):
         super().__init__()
 
         self.board = None
         self.scene = None
         self.font = None
+        self.human = Player.WHITE
+        self.turn = Player.WHITE
         self.cell_size = 64
+        self.decision = None
 
         self.setupUi(self)
 
@@ -155,10 +162,14 @@ class MainWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
 
         self.scene = QGraphicsScene()
         self.viewBoard.setScene(self.scene)
+        self.turn = Player.WHITE
+        self.decision = DecisionTree(board=self.board, max_level=2)
+
         self.init_board()
         pass
 
     def make_move(self, move):
+        self.statusbar.showMessage(str(move))
         to_pos = move.to_pos
         from_pos = move.from_pos
 
@@ -172,10 +183,28 @@ class MainWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         from_item.setPos(to_pos.x * self.cell_size, 7 * self.cell_size - to_pos.y * self.cell_size)
 
         move.figure.move(move.to_pos)
+        self.turn = -self.turn
+        if self.turn != self.human:
+            self.start_think(self.turn)
+
+    def start_think(self, color):
+        self.think_thread = DecisionThread(self.decision, color)
+        self.think_thread.finished.connect(self.think_done)
+        self.think_thread.start()
+        pass
+
+    def think_done(self):
+        print("Think done, score: %.2f" % self.think_thread.score)
+        if self.think_thread.move is not None:
+            self.make_move(self.think_thread.move)
+        pass
 
 
 if __name__ == '__main__':
     app = QApplication([])
-    view = MainWindow()
+    view = GameWindow()
     view.show()
-    app.exec()
+    try:
+        app.exec()
+    except Exception as e:
+        print(e)
