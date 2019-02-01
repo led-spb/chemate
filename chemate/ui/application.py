@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsItem
 from PyQt5.QtGui import QFont, QFontDatabase, QDrag, QPainter, QPixmap, QTransform
-from PyQt5.QtCore import Qt, QMimeData, QRectF, QLineF, QPointF, QPoint, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QMimeData, QRectF, QLineF, QPointF, QPoint, QThread
 import chemate.ui.design
 from chemate.board import Board, Position, Player
-from chemate.ai import DecisionTree
+from chemate.decision import DecisionTree
 import chemate.figure
 import sys
 
@@ -19,8 +19,8 @@ class DecisionThread(QThread):
     def run(self):
         try:
             self.move, self.score = self.decision.best_move(self.color)
-        except Exception as e:
-            print(e)
+        except Exception as err:
+            print(err)
 
 
 class CellItem(QGraphicsItem):
@@ -85,10 +85,10 @@ class FigureItem(QGraphicsItem):
         return QRectF(0, 0, self.cell_size, self.cell_size)
 
     def mouseMoveEvent(self, event):
-        if QLineF(
-                QPointF(event.screenPos()),
+        distance = QLineF(QPointF(event.screenPos()),
                 QPointF(event.buttonDownScreenPos(Qt.LeftButton))
-        ).length() < QApplication.startDragDistance() \
+        ).length()
+        if distance < QApplication.startDragDistance() \
                 or self.figure.color != self.game.human \
                 or self.game.turn != self.game.human:
             return
@@ -154,6 +154,8 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         for figure in self.board.figures():
             item = FigureItem(self, figure)
             self.scene.addItem(item)
+
+        print("%dx%d" % (self.scene.width(), self.scene.height()))
         pass
 
     def new_game(self):
@@ -200,7 +202,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         pass
 
 
-if __name__ == '__main__':
+def main():
     app = QApplication([])
     view = GameWindow()
     view.show()
@@ -208,3 +210,7 @@ if __name__ == '__main__':
         app.exec()
     except Exception as e:
         print(e)
+
+
+if __name__ == '__main__':
+    main()

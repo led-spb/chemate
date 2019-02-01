@@ -1,6 +1,6 @@
 import cProfile
 from chemate.board import Board
-from chemate.ai import DecisionTree
+from chemate.decision import DecisionTree
 
 
 def start():

@@ -1,6 +1,5 @@
 from chemate.board import Board
 from chemate.figure import *
-from chemate.player import Player
 
 
 class TestBoard(object):

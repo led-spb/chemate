@@ -1,5 +1,4 @@
-from chemate.utils import Position, Direction
-from chemate.player import Player
+from chemate.utils import Position, Direction, Player
 import itertools
 
 
@@ -32,32 +31,31 @@ class Figure(object):
     def copy(self):
         """
         Create exact copy of current figure
-        :return:
+        :return: cloned Figure
         """
         return self.__class__(self.color, self.position)
 
     def available_moves(self):
         """
         Get available moves for current figure position
-        :return: iterator with valid positions of this figure
+        :return: Iterator for chemate.utils.Position object with valid positions of this figure
         """
         return None
 
     def move(self, new_position):
         """
         Moving figure to the new position
-        :param new_position:
-        :return: None
+        :param new_position: Position
         """
         self.board.make_move(from_pos=self.position, to_pos=new_position)
 
     def generate_moves(self, direction, only_empty=False, limit=8):
         """
         Generate continues moves in direction from current position
-        :param direction:
-        :param only_empty:
-        :param limit: check only first moves in this direction
-        :return: Iterator object with available positions
+        :param direction: Direction
+        :param only_empty: Generate new posiotion if cell is empty only
+        :param limit: Check only first moves in this direction
+        :return: Iterator for Position object with available positions
         """
         position = Position(self.position.x, self.position.y)
         for i in itertools.count():
@@ -142,7 +140,6 @@ class Bishop(Figure):
 
 
 class Rook(Figure):
-
     def __init__(self, color, position):
         super().__init__(color, position)
         self._price = 5
@@ -159,7 +156,6 @@ class Rook(Figure):
 
 
 class Queen(Figure):
-
     def __init__(self, color, position):
         super().__init__(color, position)
         self._price = 9
@@ -180,7 +176,6 @@ class Queen(Figure):
 
 
 class King(Figure):
-
     def __init__(self, color, position):
         super().__init__(color, position)
         self._price = 90

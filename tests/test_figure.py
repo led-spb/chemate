@@ -1,5 +1,4 @@
 from chemate.figure import *
-from chemate.player import Player
 from chemate.board import Board
 from chemate.utils import *
 

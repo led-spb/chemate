@@ -1,6 +1,5 @@
 from chemate.figure import Pawn, Rook, Knight, Bishop, Queen, King
-from chemate.player import Player
-from chemate.utils import Position
+from chemate.utils import Position, Player
 from collections import namedtuple
 
 
@@ -8,6 +7,9 @@ BaseMovement = namedtuple('BaseMovement', ['figure', 'from_pos', 'to_pos', 'take
 
 
 class Movement(BaseMovement):
+    """
+    This class describes one movement on board
+    """
     def __str__(self):
         return "%s%s%s%s" % (
             '' if isinstance(self.figure, Pawn) else self.figure.char.upper(),

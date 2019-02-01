@@ -1,5 +1,8 @@
 
 class Position(object):
+    """
+    This class describe position at board
+    """
     __slots__ = ['x', 'y']
 
     def __init__(self, *args):
@@ -21,12 +24,20 @@ class Position(object):
 
     @property
     def index(self):
+        """
+        Return index in flat array
+        :return: int
+        """
         return self.y*8 + self.x
 
     def __add__(self, other):
         return Position(self.x + other.x, self.y + other.y)
 
     def __str__(self):
+        """
+        String representation of position
+        :return:
+        """
         return "%s%d" % (chr(ord('a') + self.x), self.y+1)
 
     def __eq__(self, other):
@@ -43,3 +54,11 @@ class Direction(object):
     up_right = Position(1, 1)
     down_left = Position(-1, -1)
     down_right = Position(1, -1)
+
+
+class Player(object):
+    """
+    Constants for determine player's side
+    """
+    WHITE = 1
+    BLACK = -1

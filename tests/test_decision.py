@@ -1,7 +1,7 @@
 from chemate.figure import *
 from chemate.utils import Position
 from chemate.board import Board
-from chemate.ai import DecisionTree
+from chemate.decision import DecisionTree
 from chemate.image.draw import Draw
 import pytest
 

@@ -2,11 +2,14 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>609</width>
+    <width>530</width>
     <height>571</height>
    </rect>
   </property>
@@ -21,29 +24,31 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetMinimumSize</enum>
+    </property>
     <item>
      <widget class="QGraphicsView" name="viewBoard">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
-        <width>512</width>
-        <height>512</height>
+        <width>530</width>
+        <height>530</height>
        </size>
       </property>
+      <property name="lineWidth">
+       <number>1</number>
+      </property>
       <property name="renderHints">
-       <set>QPainter::Antialiasing|QPainter::TextAntialiasing</set>
+       <set>QPainter::Antialiasing|QPainter::HighQualityAntialiasing|QPainter::TextAntialiasing</set>
       </property>
       <property name="dragMode">
        <enum>QGraphicsView::NoDrag</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QListView" name="listView">
-      <property name="maximumSize">
-       <size>
-        <width>150</width>
-        <height>16777215</height>
-       </size>
       </property>
      </widget>
     </item>
@@ -57,7 +62,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>609</width>
+     <width>530</width>
      <height>21</height>
     </rect>
    </property>

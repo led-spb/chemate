@@ -1,9 +1,11 @@
-from chemate.player import Player
-from chemate.utils import Position
+from chemate.utils import Position, Player
 import random
 
 
 class DecisionTree(object):
+    """
+    This class realize decision tree algorithm
+    """
     def __init__(self, board, max_level):
         self.board = board
         self.best_moves = None
@@ -12,10 +14,11 @@ class DecisionTree(object):
         self._estimates = {}
         pass
 
-    def best_move(self, color, depth=None, debug=None):
+    def best_move(self, color, depth=None):
         """
-        :param color:
-        :param depth:
+        Select best move for player
+        :param color: color of figures
+        :param depth: number of moves for look
         :return: Movement object
         """
         depth = depth or self.max_level
@@ -23,16 +26,9 @@ class DecisionTree(object):
         best_score = -9999 if color == Player.WHITE else 9999
 
         for move in self.board.legal_moves(color):
-            figure = move.figure
-            new_position = move.to_pos
-            if debug is not None:
-                debug.draw_move_variant(figure.position, new_position)
-
             self.board.make_move(move.from_pos, move.to_pos)
             score = self.mini_max(-color, depth-1, -10000, 10000)
 
-            if debug is not None:
-                debug.draw_estimate(new_position, score)
             if (color == Player.WHITE and score > best_score) \
                     or (color == Player.BLACK and score < best_score):
                 best_move = move
