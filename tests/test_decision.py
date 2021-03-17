@@ -2,7 +2,7 @@ from chemate.figure import *
 from chemate.utils import Position
 from chemate.board import Board
 from chemate.decision import DecisionTree
-from chemate.image.draw import Draw
+#from chemate.image.draw import Draw
 import pytest
 
 
@@ -25,11 +25,11 @@ class TestDecision(object):
             drw.draw_board(board)
             drw.image.save(filename='move_%02d.png' % i)
 
-    #@pytest.mark.skip
+    @pytest.mark.skip
     def test_game(self):
         board = Board()
 
-        board.initial_position()
+        board.init()
         decision = DecisionTree(board=board, max_level=3)
         assert abs(decision.estimate()) <= 0.5
         self.make_moves(board, decision, Player.WHITE, 30)

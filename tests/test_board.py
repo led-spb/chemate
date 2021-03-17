@@ -1,11 +1,11 @@
 from chemate.board import Board
+from chemate.positions import EmptyPosition, InitialPosition
 from chemate.figure import *
 
 
 class TestBoard(object):
     def test_board_init(self):
-        board = Board()
-        board.initial_position()
+        board = Board(InitialPosition())
         print()
         print(board)
 
@@ -36,8 +36,7 @@ class TestBoard(object):
         pass
 
     def test_board_move(self):
-        board = Board()
-        board.initial_position()
+        board = Board(InitialPosition())
         board.make_move(Position.char('e2'), Position.char('e4'))
         print(board)
         assert len(board.moves) == 1
@@ -46,20 +45,27 @@ class TestBoard(object):
         assert len(board.moves) == 0
 
     def test_checkmate(self):
-        board = Board()
+        board = Board(EmptyPosition())
         fig = [
             King(Player.WHITE, Position('h1')),
             Pawn(Player.WHITE, Position('g2')),
             Pawn(Player.WHITE, Position('h2')),
-            Bishop(Player.BLACK, Position('d4'))
+            Bishop(Player.BLACK, Position('d4')),
+            Pawn(Player.BLACK, Position('a7'))
+
         ]
         board.put_figures(fig)
+        print()
+        print(board)
 
         # No check, no mate
         moves = board.legal_moves(Player.WHITE)
-        assert len(moves) == 5
+        assert len(moves) == 4
 
         board.make_move(Position('h1'), Position('g1'))
+        board.make_move(Position('a7'), Position('a6'))
+        print()
+        print(board)
         moves = board.legal_moves(Player.WHITE)
         # Check, no mate
         assert len(moves) == 2
@@ -69,5 +75,42 @@ class TestBoard(object):
         assert len(moves) == 0
 
         board.make_move(Position('h2'), Position('h3'))
+        board.make_move(Position('a6'), Position('a5'))
         moves = board.legal_moves(Player.WHITE)
         assert len(moves) == 1
+
+    def test_has_moved(self):
+        board = Board(EmptyPosition())
+
+        p1 = Pawn(Player.WHITE, Position('a2'))
+        p2 = Pawn(Player.BLACK, Position('a7'))
+        board.put_figures([p1, p2])
+
+        m = board.legal_moves(Player.WHITE)[0]
+        board.make_move(m.from_pos, m.to_pos)
+
+        print()
+        print(board)
+
+        assert board.has_moved(p1)
+        assert not board.has_moved(p2)
+
+    def test_check_position(self):
+        board = Board(EmptyPosition())
+
+        k = King(Player.WHITE, Position('e1'))
+        r = Rook(Player.BLACK, Position('a7'))
+        board.put_figures([k, r])
+
+        print()
+        print(board)
+
+        assert not board.has_check(Player.WHITE)
+        assert not board.has_check(Player.BLACK)
+
+        board.make_move(r.position, Position('a1'))
+        print()
+        print(board)
+        assert board.has_check(Player.WHITE)
+        assert not board.has_check(Player.BLACK)
+        pass

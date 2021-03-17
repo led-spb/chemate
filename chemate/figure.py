@@ -193,3 +193,35 @@ class King(Figure):
     @Figure.char.getter
     def char(self):
         return 'K' if self.color == Player.WHITE else 'k'
+
+    def rook_moves(self, long):
+        # Unable to rook when king already moved
+        if self.board.has_moved(self):
+            return
+
+        if long:
+            empty_pos = [
+                Position(self.position.x - 1, self.position.y),
+                Position(self.position.x - 2, self.position.y),
+                Position(self.position.x - 3, self.position.y),
+            ]
+        else:
+            empty_pos = [
+                Position(self.position.x + 1, self.position.y),
+                Position(self.position.x + 2, self.position.y),
+            ]
+        for p in empty_pos:
+            if self.board.get_figure(p):
+                return
+
+        p = Position(0 if long else 7, self.position.y)
+        rook = self.board.get_figure(p)
+
+        # Unable to rook when rook already moved
+        if rook is None or not isinstance(rook, Rook) or rook.color != self.color or self.board.has_moved(rook):
+            return
+
+        # Unable to rook then check
+        if self.board.has_check(self.color):
+            return
+        pass

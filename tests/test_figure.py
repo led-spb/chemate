@@ -1,5 +1,6 @@
 from chemate.figure import *
 from chemate.board import Board
+from chemate.positions import EmptyPosition
 from chemate.utils import *
 
 
@@ -9,8 +10,8 @@ class TestFigure(object):
         Testing copy figure, after copy new and old must be different objects
         :return:
         """
-        board1 = Board()
-        board2 = Board()
+        board1 = Board(EmptyPosition())
+        board2 = Board(EmptyPosition())
         p1 = Pawn(Player.WHITE, Position(3, 3))
         board1.put_figure(p1)
 
@@ -24,7 +25,7 @@ class TestFigure(object):
 
 class TestPawn(object):
     def test_first_move(self):
-        board = Board()
+        board = Board(EmptyPosition())
 
         # 1. White pawn can move 2 on up at first
         p1 = Pawn(Player.WHITE, Position('d2'))
@@ -51,7 +52,7 @@ class TestPawn(object):
         assert Position('b4') in moves
 
     def test_blocked(self):
-        board = Board()
+        board = Board(EmptyPosition())
 
         # Blocked by end of board
         p1 = Pawn(Player.WHITE, Position(1, 7))
@@ -99,7 +100,7 @@ class TestPawn(object):
 
 class TestKnight(object):
     def test_move(self):
-        board = Board()
+        board = Board(EmptyPosition())
         knight = Knight(Player.BLACK, Position.char('D5'))
         board.put_figure(knight)
         for pos in knight.available_moves():
@@ -111,7 +112,7 @@ class TestKnight(object):
 
 class TestKing(object):
     def test_move(self):
-        board = Board()
+        board = Board(EmptyPosition())
         king = King(Player.WHITE, Position('c3'))
         board.put_figure(king)
         moves = board.legal_moves(Player.WHITE)
@@ -120,6 +121,12 @@ class TestKing(object):
         king.move(Position('a1'))
         moves = board.legal_moves(Player.WHITE)
         assert len(moves) == 3
+
+    def test_rook(self):
+        board = Board(EmptyPosition())
+        king = King(Player.WHITE, Position('e1'))
+        rook = Rook(Player.WHITE, Position('h1'))
+        board.put_figures([king, rook])
 
 
 class TestBishop(object):
@@ -134,7 +141,7 @@ class TestQueen(object):
 
 class TestRook(object):
     def test_fight_blocked(self):
-        board = Board()
+        board = Board(EmptyPosition())
         rook = Rook(Player.WHITE, Position.char('A3'))
         pawn = Pawn(Player.BLACK, Position.char('B3'))
         p2 = Knight(Player.WHITE, Position.char('A5'))
@@ -145,4 +152,4 @@ class TestRook(object):
         for pos in rook.available_moves():
             assert pos != Position.char('C3')
             assert pos != Position.char('A5')
-            board.rollback_move()
+            #board.rollback_move()

@@ -1,3 +1,6 @@
+from collections import namedtuple
+import chemate.figure
+
 
 class Position(object):
     """
@@ -62,3 +65,19 @@ class Player(object):
     """
     WHITE = 1
     BLACK = -1
+
+
+BaseMovement = namedtuple('BaseMovement', ['figure', 'from_pos', 'to_pos', 'taken_figure', 'is_rook'])
+
+
+class Movement(BaseMovement):
+    """
+    This class describes one movement on board
+    """
+    def __str__(self):
+        return "%s%s%s%s" % (
+            '' if isinstance(self.figure, chemate.figure.Pawn) else self.figure.char.upper(),
+            str(self.from_pos),
+            '-' if self.taken_figure is None else 'x',
+            str(self.to_pos)
+        )

@@ -1,31 +1,14 @@
-from chemate.figure import Pawn, Rook, Knight, Bishop, Queen, King
-from chemate.utils import Position, Player
-from collections import namedtuple
-
-
-BaseMovement = namedtuple('BaseMovement', ['figure', 'from_pos', 'to_pos', 'taken_figure'])
-
-
-class Movement(BaseMovement):
-    """
-    This class describes one movement on board
-    """
-    def __str__(self):
-        return "%s%s%s%s" % (
-            '' if isinstance(self.figure, Pawn) else self.figure.char.upper(),
-            str(self.from_pos),
-            '-' if self.taken_figure is None else 'x',
-            str(self.to_pos)
-        )
+from chemate.figure import King
+from chemate.utils import Movement
 
 
 class Board(object):
-    def __init__(self):
+    def __init__(self, position_factory):
+        self.position_factory = position_factory
         self.board = None
-        self.clear()
         self.moves = []
         self.balance = 0
-        pass
+        self.init()
 
     def __str__(self):
         """
@@ -33,7 +16,7 @@ class Board(object):
         :return: None
         """
         d = ["." if self.board[i] is None else self.board[i].char for i in range(64)]
-        formatted = [" ".join(d[i-7:i+1]) for i in list(reversed(range(64)))[::8]]
+        formatted = [" ".join(d[i - 7:i + 1]) for i in list(reversed(range(64)))[::8]]
         return "\n".join(formatted)
 
     def __hash__(self):
@@ -52,46 +35,20 @@ class Board(object):
         """
         self.board = [None for x in range(64)]
 
-    def initial_position(self):
+    def init(self):
         """
         Generate initial state of board
         :return: None
         """
-        self.board = [None for x in range(64)]
-        self.put_figures(self.default_figures(Player.WHITE))
-        self.put_figures(self.default_figures(Player.BLACK))
-
-    @staticmethod
-    def default_figures(color):
-        """
-        Generate all figures of specified color in default positions
-        :param color: Color of the figures
-        :return: Iterator for Figure instances
-        """
-        # Pawns
-        for x in range(0, 8, 1):
-            yield Pawn(color, Position(x, 1 if color == Player.WHITE else 6))
-        # Towers
-        for x in range(0, 8, 7):
-            yield Rook(color, Position(x, 0 if color == Player.WHITE else 7))
-        # Horses
-        for x in range(1, 7, 5):
-            yield Knight(color, Position(x, 0 if color == Player.WHITE else 7))
-        # Elephants
-        for x in range(2, 6, 3):
-            yield Bishop(color, Position(x, 0 if color == Player.WHITE else 7))
-        # Queen
-        yield Queen(color, Position(3, 0 if color == Player.WHITE else 7))
-        # King
-        yield King(color, Position(4, 0 if color == Player.WHITE else 7))
-        pass
+        self.clear()
+        self.put_figures(self.position_factory.figures())
 
     def put_figure(self, figure):
         """
         Put a figure on the board
         :return: None
         """
-        self.board[figure.position.y*8 + figure.position.x] = figure
+        self.board[figure.position.y * 8 + figure.position.x] = figure
         figure.board = self
         self.balance += figure.price
         pass
@@ -121,7 +78,8 @@ class Board(object):
                 figure=figure,
                 from_pos=from_pos,
                 to_pos=to_pos,
-                taken_figure=taken
+                taken_figure=taken,
+                is_rook=False
             )
         )
         self.board[from_pos.index] = None
@@ -133,12 +91,18 @@ class Board(object):
         Rollback last move
         :return: None
         """
+        if len(self.moves) == 0:
+            return
+
         last_move = self.moves.pop()
         self.board[last_move.from_pos.index] = last_move.figure
         self.board[last_move.to_pos.index] = last_move.taken_figure
         last_move.figure.position = last_move.from_pos
         if last_move.taken_figure is not None:
             self.balance += last_move.taken_figure.price
+
+        if last_move.is_rook:
+            self.rollback_move()
 
     def put_figures(self, it):
         """
@@ -192,7 +156,7 @@ class Board(object):
                 for pos in figure.available_moves():
                     taken = self.get_figure(pos)
                     if taken is not None or not taken_only:
-                        yield Movement(figure, figure.position, pos, taken)
+                        yield Movement(figure, figure.position, pos, taken, False)
         pass
 
     def legal_moves(self, color):
@@ -202,24 +166,33 @@ class Board(object):
         :return: list of Movement object
         """
         our_moves = list(self.all_moves(color))
-        """
-        is_check = False
-        for opp_move in self.all_moves(color=-color, taken_only=True):
-            if isinstance(opp_move.taken_figure, King):
-                is_check = True
-                break
-        if not is_check:
-            return our_moves
-        """
         legal_moves = []
         for m in our_moves:
+            # Try to make move and when check position
             self.make_move(m.from_pos, m.to_pos)
-            is_legal_move = True
-            for he_move in self.all_moves(color=-color, taken_only=True):
-                if isinstance(he_move.taken_figure, King):
-                    is_legal_move = False
-                    break
-            if is_legal_move:
+            if not self.has_check(color):
                 legal_moves.append(m)
             self.rollback_move()
         return legal_moves
+
+    def has_check(self, color):
+        """
+        Return true if current position has check for color player
+        :param color:
+        :return:
+        """
+        for opposite_move in self.all_moves(color=-color, taken_only=True):
+            if isinstance(opposite_move.taken_figure, King):
+                return True
+        return False
+
+    def has_moved(self, figure):
+        """
+        Check for figure has moved
+        :param figure:
+        :return:
+        """
+        for m in self.moves:
+            if m.figure == figure:
+                return True
+        return False

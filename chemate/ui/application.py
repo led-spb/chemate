@@ -2,9 +2,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphics
 from PyQt5.QtGui import QFont, QFontDatabase, QDrag, QPainter, QPixmap, QTransform
 from PyQt5.QtCore import Qt, QMimeData, QRectF, QLineF, QPointF, QPoint, QThread
 import chemate.ui.design
-from chemate.board import Board, Position, Player
+from chemate.positions import InitialPosition
+from chemate.utils import Position, Player
+from chemate.board import Board
 from chemate.decision import DecisionTree
-import chemate.figure
 import sys
 
 
@@ -159,13 +160,12 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         pass
 
     def new_game(self):
-        self.board = Board()
-        self.board.initial_position()
+        self.board = Board(InitialPosition())
 
         self.scene = QGraphicsScene()
         self.viewBoard.setScene(self.scene)
         self.turn = Player.WHITE
-        self.decision = DecisionTree(board=self.board, max_level=2)
+        self.decision = DecisionTree(board=self.board, max_level=3)
 
         self.init_board()
         pass
