@@ -52,7 +52,6 @@ class TestBoard(object):
             Pawn(Player.WHITE, Position('h2')),
             Bishop(Player.BLACK, Position('d4')),
             Pawn(Player.BLACK, Position('a7'))
-
         ]
         board.put_figures(fig)
         print()

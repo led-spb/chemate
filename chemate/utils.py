@@ -4,7 +4,7 @@ import chemate.figure
 
 class Position(object):
     """
-    This class describe position at board
+    This class describes position at board
     """
     __slots__ = ['x', 'y']
 
@@ -28,7 +28,7 @@ class Position(object):
     @property
     def index(self):
         """
-        Return index in flat array
+        Returns index in flat array
         :return: int
         """
         return self.y*8 + self.x

@@ -1,6 +1,7 @@
+import functools
 from abc import abstractmethod
-from chemate.figure import Figure, Pawn, Rook, Knight, Bishop, Queen, King
-from chemate.utils import Position, Player
+from chemate.figure import FigureCreator
+from chemate.utils import Position
 
 
 class PositionFactory:
@@ -17,25 +18,25 @@ class EmptyPosition(PositionFactory):
         yield from ()
 
 
-class InitialPosition(PositionFactory):
-    def figures(self):
-        yield from self._initial_figures(Player.WHITE)
-        yield from self._initial_figures(Player.BLACK)
+class PredefinedFENPosition(PositionFactory):
+    def __init__(self, data):
+        self.curr_y = 7
+        self.curr_x = 0
+        self.data = data.split(' ')[0]
+        pass
 
-    def _initial_figures(self, color):
-        # Pawns
-        for x in range(0, 8, 1):
-            yield Pawn(color, Position(x, 1 if color == Player.WHITE else 6))
-        # Towers
-        for x in range(0, 8, 7):
-            yield Rook(color, Position(x, 0 if color == Player.WHITE else 7))
-        # Horses
-        for x in range(1, 7, 5):
-            yield Knight(color, Position(x, 0 if color == Player.WHITE else 7))
-        # Elephants
-        for x in range(2, 6, 3):
-            yield Bishop(color, Position(x, 0 if color == Player.WHITE else 7))
-        # Queen
-        yield Queen(color, Position(3, 0 if color == Player.WHITE else 7))
-        # King
-        yield King(color, Position(4, 0 if color == Player.WHITE else 7))
+    def figures(self):
+        x, y = 0, 7
+        for chr in self.data:
+            if chr == '/':
+                x, y = 0, y - 1
+                continue
+            if chr.isdigit():
+                x += int(chr)
+                continue
+            yield FigureCreator.by_char(chr)(Position(x, y))
+            x = x + 1
+        yield from ()
+
+
+InitialPosition = functools.partial(PredefinedFENPosition, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')

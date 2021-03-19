@@ -1,3 +1,4 @@
+import functools
 from chemate.utils import Position, Direction, Player
 import itertools
 
@@ -70,6 +71,25 @@ class Figure(object):
             else:
                 break
         pass
+
+
+class FigureCreator:
+    @staticmethod
+    def by_char(char):
+        color = Player.WHITE if char.isupper() else Player.BLACK
+        if char in ('r', 'R'):
+            return functools.partial(Rook, color)
+        if char in ('b', 'B'):
+            return functools.partial(Bishop, color)
+        if char in ('n', 'N'):
+            return functools.partial(Knight, color)
+        if char in ('k', 'K'):
+            return functools.partial(King, color)
+        if char in ('q', 'Q'):
+            return functools.partial(Queen, color)
+        if char in ('p', 'P'):
+            return functools.partial(Pawn, color)
+        raise RuntimeError('Unknown figure "%s"' % char)
 
 
 class Pawn(Figure):
