@@ -30,81 +30,74 @@ class TestPawn(object):
         # 1. White pawn can move 2 on up at first
         p1 = Pawn(Player.WHITE, Position('d2'))
         board.put_figure(p1)
-        moves = list(p1.available_moves())
+        moves = list(map(str, p1.available_moves()))
         assert len(moves) == 2
-        assert Position('d3') in moves and Position('d4') in moves
+        assert 'd2-d3' in moves and 'd2-d4' in moves
 
         # 2. After this only one
         p1.move(Position('d3'))
-        moves = list(p1.available_moves())
+        moves = list(map(str,p1.available_moves()))
         assert len(moves) == 1
-        assert Position('d4') in moves
+        assert 'd3-d4' in moves
 
         # 3. Black pawn can move 2 on down
         p2 = Pawn(Player.BLACK, Position('b7'))
         board.put_figure(p2)
-        moves = list(p2.available_moves())
-        assert Position('b6') in moves and Position('b5') in moves
+        moves = list(map(str, p2.available_moves()))
+        assert 'b7-b6' in moves and 'b7-b5' in moves
 
         p2.move(Position('b5'))
-        moves = list(p2.available_moves())
+        moves = list(map(str, p2.available_moves()))
         assert len(moves) == 1
-        assert Position('b4') in moves
+        assert 'b5-b4' in moves
 
     def test_blocked(self):
         board = Board(EmptyPosition())
 
         # Blocked by end of board
-        p1 = Pawn(Player.WHITE, Position(1, 7))
-        board.put_figure(p1)
-        moves = list(p1.available_moves())
+        d4 = Pawn(Player.WHITE, Position('a8'))
+        board.put_figure(d4)
+        moves = list(d4.available_moves())
         assert len(moves) == 0
 
         # Blocked by own figure
-        p2 = Pawn(Player.WHITE, Position(1, 6))
-        board.put_figure(p2)
-        moves = list(p2.available_moves())
+        e4 = Pawn(Player.WHITE, Position('a7'))
+        board.put_figure(e4)
+        moves = list(e4.available_moves())
         assert len(moves) == 0
 
         # Blocked by opposite figure and fight
-        p1 = Pawn(Player.WHITE, Position(3, 3))
-        p2 = Pawn(Player.WHITE, Position(4, 3))
+        d4 = Pawn(Player.WHITE, Position('d4'))
+        e4 = Pawn(Player.WHITE, Position('e4'))
+        d5 = Pawn(Player.BLACK, Position('d5'))
+        e5 = Pawn(Player.BLACK, Position('e5'))
+        board.put_figures([d4, e4, d5, e5])
 
-        p3 = Pawn(Player.BLACK, Position(3, 4))
-        p4 = Pawn(Player.BLACK, Position(4, 4))
-        board.put_figure(p1)
-        board.put_figure(p2)
-        board.put_figure(p3)
-        board.put_figure(p4)
-
-        print()
-        print(board)
-
-        moves = list(p1.available_moves())
+        moves = list(map(str, d4.available_moves()))
         assert len(moves) == 1
-        assert Position(4, 4) in moves
+        assert 'd4-e5' in moves
 
-        moves = list(p2.available_moves())
+        moves = list(map(str, e4.available_moves()))
         assert len(moves) == 1
-        assert Position(3, 4) in moves
+        assert 'e4-d5' in moves
 
-        moves = list(p3.available_moves())
+        moves = list(map(str, d5.available_moves()))
         assert len(moves) == 1
-        assert Position(4, 3) in moves
+        assert 'd5-e4' in moves
 
-        moves = list(p4.available_moves())
+        moves = list(map(str, e5.available_moves()))
         assert len(moves) == 1
-        assert Position(3, 3) in moves
+        assert 'e5-d4' in moves
         pass
 
 
 class TestKnight(object):
     def test_move(self):
         board = Board(EmptyPosition())
-        knight = Knight(Player.BLACK, Position.char('D5'))
+        knight = Knight(Player.BLACK, Position.char('d5'))
         board.put_figure(knight)
-        for pos in knight.available_moves():
-            knight.move(pos)
+        for move in knight.available_moves():
+            knight.move(move.to_pos)
             assert len(board.moves) == 1
             board.rollback_move()
             assert len(board.moves) == 0
@@ -142,14 +135,14 @@ class TestQueen(object):
 class TestRook(object):
     def test_fight_blocked(self):
         board = Board(EmptyPosition())
-        rook = Rook(Player.WHITE, Position.char('A3'))
-        pawn = Pawn(Player.BLACK, Position.char('B3'))
-        p2 = Knight(Player.WHITE, Position.char('A5'))
-        bishop = Bishop(Player.BLACK, Position.char('H3'))
+        rook = Rook(Player.WHITE, Position.char('a3'))
+        pawn = Pawn(Player.BLACK, Position.char('b3'))
+        p2 = Knight(Player.WHITE, Position.char('a5'))
+        bishop = Bishop(Player.BLACK, Position.char('h3'))
 
         board.put_figures([rook, pawn, p2, bishop])
 
-        for pos in rook.available_moves():
-            assert pos != Position.char('C3')
-            assert pos != Position.char('A5')
+        for movement in rook.available_moves():
+            assert movement.to_pos != Position.char('a3')
+            assert movement.to_pos != Position.char('a5')
             #board.rollback_move()

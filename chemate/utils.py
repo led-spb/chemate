@@ -1,4 +1,6 @@
 from collections import namedtuple
+from typing import Iterable, Tuple, Any
+
 import chemate.figure
 
 
@@ -24,6 +26,9 @@ class Position(object):
         x = ord(value.lower()[0]) - ord('a')
         y = int(value[1])-1
         return cls(x, y)
+
+    def is_last_line_for(self, color):
+        return (self.y == 7 and color == Player.WHITE) or (self.y == 0 and color == Player.BLACK)
 
     @property
     def index(self):
@@ -70,13 +75,19 @@ class Player(object):
     BLACK = -1
 
 
-BaseMovement = namedtuple('BaseMovement', ['figure', 'from_pos', 'to_pos', 'taken_figure', 'is_rook'])
+class Movement(object):
 
-
-class Movement(BaseMovement):
     """
     This class describes one movement on board
     """
+    def __init__(self, figure, from_pos, to_pos, taken_figure=None, is_rook=None, transform_to=None) -> None:
+        self.is_rook = is_rook
+        self.to_pos = to_pos
+        self.from_pos = from_pos
+        self.figure = figure
+        self.transform_to = transform_to
+        self.taken_figure = taken_figure
+
     def __str__(self):
         return "%s%s%s%s" % (
             '' if isinstance(self.figure, chemate.figure.Pawn) else self.figure.char.upper(),

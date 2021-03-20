@@ -58,17 +58,21 @@ class Board(object):
                 yield figure
         pass
 
-    def make_move(self, from_pos, to_pos):
+    def make_move(self, from_pos, to_pos, is_rook=False, transform_to=None):
         """
         Move figure to the new location
         :param from_pos:
         :param to_pos:
+        :param is_rook:
+        :param transform_to:
         :return: None
         """
         figure = self.board[from_pos.index]
         taken = self.board[to_pos.index]
         if taken is not None:
             self.balance -= taken.price
+        if transform_to is not None:
+            self.balance += transform_to.price
 
         self.moves.append(
             Movement(
@@ -76,9 +80,11 @@ class Board(object):
                 from_pos=from_pos,
                 to_pos=to_pos,
                 taken_figure=taken,
-                is_rook=False
+                is_rook=is_rook,
+                transform_to=transform_to
             )
         )
+        figure = transform_to or figure
         self.board[from_pos.index] = None
         self.board[to_pos.index] = figure
         figure.position = to_pos
@@ -86,20 +92,21 @@ class Board(object):
     def rollback_move(self):
         """
         Rollback last move
-        :return: None
+        :return: BaseMovement
         """
         if len(self.moves) == 0:
             return
 
         last_move = self.moves.pop()
         self.board[last_move.from_pos.index] = last_move.figure
-        self.board[last_move.to_pos.index] = last_move.taken_figure
+        self.board[last_move.to_pos.index] = last_move.taken_figure or None
         last_move.figure.position = last_move.from_pos
+        # restore balance
         if last_move.taken_figure is not None:
             self.balance += last_move.taken_figure.price
-
-        if last_move.is_rook:
-            self.rollback_move()
+        if last_move.transform_to is not None:
+            self.balance -= last_move.transform_to.price
+        return last_move
 
     def put_figures(self, it):
         """
@@ -144,16 +151,17 @@ class Board(object):
     def all_moves(self, color=None, taken_only=False):
         """
         Return list of available moves without
-        :param color:
-        :param taken_only:
+        :param color: only for figures of specified color
+        :param taken_only: only move when have take another figure
         :return: Iterator object
         """
         for figure in self.board:
             if figure is not None and (color is None or figure.color == color):
-                for pos in figure.available_moves():
-                    taken = self.get_figure(pos)
+                for move in figure.available_moves():
+                    taken = self.get_figure(move.to_pos)
                     if taken is not None or not taken_only:
-                        yield Movement(figure, figure.position, pos, taken, False)
+                        move.taken_figure = taken
+                        yield move
         pass
 
     def legal_moves(self, color):
