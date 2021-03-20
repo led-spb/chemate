@@ -4,7 +4,7 @@ import chemate.figure
 
 class Position(object):
     """
-    This class describes position at board
+    This class describes figure position at board
     """
     __slots__ = ['x', 'y']
 
@@ -48,6 +48,9 @@ class Position(object):
 
 
 class Direction(object):
+    """
+    This class describes directions for move
+    """
     up = Position(0, 1)
     down = Position(0, -1)
     left = Position(-1, 0)
@@ -81,3 +84,17 @@ class Movement(BaseMovement):
             '-' if self.taken_figure is None else 'x',
             str(self.to_pos)
         )
+
+
+class Painter:
+    def draw_board(self, board, **args):
+        pass
+
+
+class StringPainter(Painter):
+    def draw_board(self, board, **args):
+        lines = [['.' for x in range(8)] for y in range(8)]
+        for figure in board.figures():
+            lines[7-figure.position.y][figure.position.x] = figure.char
+
+        return "\n".join([" ".join(line) for line in lines])

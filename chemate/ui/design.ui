@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>530</width>
-    <height>571</height>
+    <width>548</width>
+    <height>589</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -62,7 +62,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>530</width>
+     <width>548</width>
      <height>21</height>
     </rect>
    </property>
@@ -71,6 +71,7 @@
      <string>Game</string>
     </property>
     <addaction name="actionNewGame"/>
+    <addaction name="actionRollbackMove"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -80,6 +81,23 @@
   <action name="actionNewGame">
    <property name="text">
     <string>New...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actionRollbackMove">
+   <property name="text">
+    <string>Rollback move...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>true</bool>
    </property>
   </action>
   <action name="actionQuit">

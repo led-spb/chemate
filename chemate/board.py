@@ -10,15 +10,6 @@ class Board(object):
         self.balance = 0
         self.init()
 
-    def __str__(self):
-        """
-        Current state of the board for debug
-        :return: None
-        """
-        d = ["." if self.board[i] is None else self.board[i].char for i in range(64)]
-        formatted = [" ".join(d[i - 7:i + 1]) for i in list(reversed(range(64)))[::8]]
-        return "\n".join(formatted)
-
     def __hash__(self):
         """
         Calculates hash for current position
@@ -60,6 +51,12 @@ class Board(object):
         :return: Figure instance or None
         """
         return self.board[position.index]
+
+    def find_figures(self, figure_class, color=None):
+        for figure in self.figures():
+            if isinstance(figure, figure_class) and (color is None or figure.color == color):
+                yield figure
+        pass
 
     def make_move(self, from_pos, to_pos):
         """
@@ -185,6 +182,14 @@ class Board(object):
             if isinstance(opposite_move.taken_figure, King):
                 return True
         return False
+
+    def has_mate(self, color):
+        """
+        Return true if current position has checkmate for color player
+        :param color:
+        :return:
+        """
+        return self.has_check(color) and list(self.legal_moves(color)) == []
 
     def has_moved(self, figure):
         """

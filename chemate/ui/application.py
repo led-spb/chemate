@@ -136,6 +136,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
 
         self.actionQuit.triggered.connect(lambda x: sys.exit(0))
         self.actionNewGame.triggered.connect(lambda x: self.new_game())
+        self.actionRollbackMove.triggered.connect(lambda x: self.rollback_move())
 
         self.open_resources()
         self.new_game()
@@ -148,6 +149,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         self.font.setPixelSize(self.cell_size-5)
 
     def init_board(self):
+        self.scene.clear()
         for i in range(64):
             cell = CellItem(self, Position(i % 8, int(i/8)))
             self.scene.addItem(cell)
@@ -156,7 +158,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
             item = FigureItem(self, figure)
             self.scene.addItem(item)
 
-        print("%dx%d" % (self.scene.width(), self.scene.height()))
+        # print("%dx%d" % (self.scene.width(), self.scene.height()))
         pass
 
     def new_game(self):
@@ -165,15 +167,15 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         self.scene = QGraphicsScene()
         self.viewBoard.setScene(self.scene)
         self.turn = Player.WHITE
-        self.decision = DecisionTree(board=self.board, max_level=3)
+        self.decision = DecisionTree(board=self.board, max_level=2)
 
         self.init_board()
         pass
 
-    def make_move(self, move):
-        self.statusbar.showMessage(str(move))
-        to_pos = move.to_pos
-        from_pos = move.from_pos
+    def make_move(self, movement):
+        self.statusbar.showMessage(str(movement))
+        to_pos = movement.to_pos
+        from_pos = movement.from_pos
 
         from_item = self.scene.itemAt(
             from_pos.x * self.cell_size,
@@ -184,10 +186,26 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
             self.scene.removeItem(to_item)
         from_item.setPos(to_pos.x * self.cell_size, 7 * self.cell_size - to_pos.y * self.cell_size)
 
-        move.figure.move(move.to_pos)
+        movement.figure.move(movement.to_pos)
         self.turn = -self.turn
+        if self.board.has_mate(self.turn):
+            result = 'LOOSE' if self.turn == self.human else 'WIN'
+            print('You %s!' % result)
+            self.statusbar.showMessage(result)
+
+            return
+
         if self.turn != self.human:
             self.start_think(self.turn)
+
+    def rollback_move(self):
+        if self.turn != self.human:
+            return
+
+        self.board.rollback_move()
+        self.board.rollback_move()
+        self.init_board()
+        pass
 
     def start_think(self, color):
         self.think_thread = DecisionThread(self.decision, color)

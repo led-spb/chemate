@@ -2,17 +2,19 @@
 
 # Form implementation generated from reading ui file 'chemate\ui\design.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.14.1
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
-        MainWindow.resize(530, 571)
+        MainWindow.resize(548, 589)
         MainWindow.setMinimumSize(QtCore.QSize(0, 0))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -34,7 +36,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setEnabled(True)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 530, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 548, 21))
         self.menubar.setObjectName("menubar")
         self.menuGame = QtWidgets.QMenu(self.menubar)
         self.menuGame.setObjectName("menuGame")
@@ -43,10 +45,15 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.actionNewGame = QtWidgets.QAction(MainWindow)
+        self.actionNewGame.setShortcutVisibleInContextMenu(True)
         self.actionNewGame.setObjectName("actionNewGame")
+        self.actionRollbackMove = QtWidgets.QAction(MainWindow)
+        self.actionRollbackMove.setShortcutVisibleInContextMenu(True)
+        self.actionRollbackMove.setObjectName("actionRollbackMove")
         self.actionQuit = QtWidgets.QAction(MainWindow)
         self.actionQuit.setObjectName("actionQuit")
         self.menuGame.addAction(self.actionNewGame)
+        self.menuGame.addAction(self.actionRollbackMove)
         self.menuGame.addSeparator()
         self.menuGame.addAction(self.actionQuit)
         self.menubar.addAction(self.menuGame.menuAction())
@@ -59,5 +66,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "Chemate"))
         self.menuGame.setTitle(_translate("MainWindow", "Game"))
         self.actionNewGame.setText(_translate("MainWindow", "New..."))
+        self.actionNewGame.setShortcut(_translate("MainWindow", "Ctrl+N"))
+        self.actionRollbackMove.setText(_translate("MainWindow", "Rollback move..."))
+        self.actionRollbackMove.setShortcut(_translate("MainWindow", "Ctrl+Z"))
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
-
