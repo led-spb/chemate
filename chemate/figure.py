@@ -53,7 +53,7 @@ class Figure(object):
         Moving figure to the new position
         :param new_position: Position
         """
-        self.board.make_move(from_pos=self.position, to_pos=new_position)
+        self.board.make_move(Movement(from_pos=self.position, to_pos=new_position))
 
     def gen_position_by_moves(self, direction, only_empty=False, limit=8):
         """

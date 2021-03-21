@@ -1,4 +1,6 @@
-from chemate.figure import King
+from typing import Iterator
+
+from chemate.figure import King, Figure
 from chemate.utils import Movement
 
 
@@ -44,7 +46,7 @@ class Board(object):
         self.balance += figure.price
         pass
 
-    def get_figure(self, position):
+    def get_figure(self, position) -> Figure:
         """
         Get figure at specified location on board
         :param position: Position on board
@@ -58,36 +60,27 @@ class Board(object):
                 yield figure
         pass
 
-    def make_move(self, from_pos, to_pos, is_rook=False, transform_to=None):
+    def make_move(self, move):
         """
         Move figure to the new location
-        :param from_pos:
-        :param to_pos:
-        :param is_rook:
-        :param transform_to:
+        :type move: Movement
         :return: None
         """
-        figure = self.board[from_pos.index]
-        taken = self.board[to_pos.index]
-        if taken is not None:
-            self.balance -= taken.price
-        if transform_to is not None:
-            self.balance += transform_to.price
+        if move.figure is None:
+            move.figure = self.board[move.from_pos.index]
+        if move.taken_figure is None:
+            move.taken_figure = self.board[move.to_pos.index]
+        if move.taken_figure is not None:
+            self.balance -= move.taken_figure.price
+        if move.transform_to is not None:
+            self.balance += move.transform_to.price
 
-        self.moves.append(
-            Movement(
-                figure=figure,
-                from_pos=from_pos,
-                to_pos=to_pos,
-                taken_figure=taken,
-                is_rook=is_rook,
-                transform_to=transform_to
-            )
-        )
-        figure = transform_to or figure
-        self.board[from_pos.index] = None
-        self.board[to_pos.index] = figure
-        figure.position = to_pos
+        self.moves.append(move)
+        figure = move.transform_to or move.figure
+        self.board[move.from_pos.index] = None
+        self.board[move.to_pos.index] = figure
+        figure.position = move.to_pos
+        figure.board = self
 
     def rollback_move(self):
         """
@@ -148,7 +141,7 @@ class Board(object):
         # Can't move to same player's figure, otherwise we can
         return 1 if figure.color != color else 2
 
-    def all_moves(self, color=None, taken_only=False):
+    def all_moves(self, color=None, taken_only=False) -> Iterator[Movement]:
         """
         Return list of available moves without
         :param color: only for figures of specified color
@@ -156,12 +149,13 @@ class Board(object):
         :return: Iterator object
         """
         for figure in self.board:
-            if figure is not None and (color is None or figure.color == color):
-                for move in figure.available_moves():
-                    taken = self.get_figure(move.to_pos)
-                    if taken is not None or not taken_only:
-                        move.taken_figure = taken
-                        yield move
+            if figure is None or (color is not None and figure.color != color):
+                continue
+            for move in figure.available_moves():
+                taken = self.get_figure(move.to_pos)
+                if taken is not None or not taken_only:
+                    move.taken_figure = taken
+                    yield move
         pass
 
     def legal_moves(self, color):
@@ -172,11 +166,11 @@ class Board(object):
         """
         our_moves = list(self.all_moves(color))
         legal_moves = []
-        for m in our_moves:
+        for move in our_moves:
             # Try to make move and when check position
-            self.make_move(m.from_pos, m.to_pos)
+            self.make_move(move)
             if not self.has_check(color):
-                legal_moves.append(m)
+                legal_moves.append(move)
             self.rollback_move()
         return legal_moves
 

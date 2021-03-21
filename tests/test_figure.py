@@ -1,6 +1,6 @@
 from chemate.figure import *
 from chemate.board import Board
-from chemate.positions import EmptyPosition
+from chemate.positions import EmptyPosition, PredefinedFENPosition
 from chemate.utils import *
 
 
@@ -12,14 +12,14 @@ class TestFigure(object):
         """
         board1 = Board(EmptyPosition())
         board2 = Board(EmptyPosition())
-        p1 = Pawn(Player.WHITE, Position(3, 3))
+        p1 = Pawn(Player.WHITE, Position('e3'))
         board1.put_figure(p1)
 
         p2 = p1.copy()
         board2.put_figure(p2)
         assert p1 == p2
 
-        p1.move(Position(3, 4))
+        p1.move(Position('e4'))
         assert p1 != p2
 
 
@@ -89,6 +89,51 @@ class TestPawn(object):
         assert len(moves) == 1
         assert 'e5-d4' in moves
         pass
+
+    def test_transform(self):
+        board = Board(PredefinedFENPosition('7n/P5P1/8/8/8/8/p5p1/7N'))
+
+        # White
+        a7 = board.get_figure(Position('a7'))
+        moves = list(a7.available_moves())
+        assert len(moves) == 4, "White pawn can transform to 4 figures"
+
+        move = next(filter(lambda x: isinstance(x.transform_to, Queen), moves))
+        board.make_move(move)
+
+        a8 = board.get_figure(Position('a8'))
+        assert isinstance(a8, Queen) and a8.color == Player.WHITE
+        assert board.get_figure(Position('a7')) is None
+
+        g7 = board.get_figure(Position('g7'))
+        moves = list(g7.available_moves())
+        assert len(moves) == 8
+        move = next(filter(lambda x: isinstance(x.transform_to, Queen) and x.to_pos == Position('h8'), moves))
+        board.make_move(move)
+        h8 = board.get_figure(Position('h8'))
+        assert isinstance(h8, Queen) and h8.color == Player.WHITE
+        assert board.get_figure(Position('g7')) is None
+
+        # Black
+        a2 = board.get_figure(Position('a2'))
+        moves = list(a2.available_moves())
+        assert len(moves) == 4, "White pawn can transform to 4 figures"
+
+        move = next(filter(lambda x: isinstance(x.transform_to, Queen), moves))
+        board.make_move(move)
+
+        a1 = board.get_figure(Position('a1'))
+        assert isinstance(a1, Queen) and a1.color == Player.BLACK
+        assert board.get_figure(Position('a2')) is None
+
+        g2 = board.get_figure(Position('g2'))
+        moves = list(g2.available_moves())
+        assert len(moves) == 8
+        move = next(filter(lambda x: isinstance(x.transform_to, Queen) and x.to_pos == Position('h1'), moves))
+        board.make_move(move)
+        h1 = board.get_figure(Position('h1'))
+        assert isinstance(h1, Queen) and h1.color == Player.BLACK
+        assert board.get_figure(Position('g2')) is None
 
 
 class TestKnight(object):

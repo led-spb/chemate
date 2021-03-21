@@ -157,8 +157,6 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         for figure in self.board.figures():
             item = FigureItem(self, figure)
             self.scene.addItem(item)
-
-        # print("%dx%d" % (self.scene.width(), self.scene.height()))
         pass
 
     def new_game(self):
@@ -173,6 +171,9 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         pass
 
     def make_move(self, movement):
+        """
+        :type movement: Movement
+        """
         self.statusbar.showMessage(str(movement))
         to_pos = movement.to_pos
         from_pos = movement.from_pos
@@ -186,14 +187,17 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
             self.scene.removeItem(to_item)
         from_item.setPos(to_pos.x * self.cell_size, 7 * self.cell_size - to_pos.y * self.cell_size)
 
-        movement.figure.move(movement.to_pos)
+        self.board.make_move(movement)
         self.turn = -self.turn
         if self.board.has_mate(self.turn):
             result = 'LOOSE' if self.turn == self.human else 'WIN'
             print('You %s!' % result)
             self.statusbar.showMessage(result)
-
             return
+
+        # When movement is transform pawn, need to build new scene
+        if movement.transform_to is not None:
+            self.init_board()
 
         if self.turn != self.human:
             self.start_think(self.turn)

@@ -26,7 +26,7 @@ class DecisionTree(object):
         best_score = -9999 if color == Player.WHITE else 9999
 
         for move in self.board.legal_moves(color):
-            self.board.make_move(move.from_pos, move.to_pos)
+            self.board.make_move(move)
             score = self.mini_max(-color, depth-1, -10000, 10000)
 
             if (color == Player.WHITE and score > best_score) \
@@ -52,7 +52,7 @@ class DecisionTree(object):
         # Generate all available movements in current position
         for move in self.board.legal_moves(color):
             # Move own figure
-            self.board.make_move(move.from_pos, move.to_pos)
+            self.board.make_move(move)
             # Make opponent's move and check the position estimate
             score = self.mini_max(-color, depth-1, alpha, beta)
             # Rollback own movement

@@ -80,13 +80,18 @@ class Movement(object):
     """
     This class describes one movement on board
     """
-    def __init__(self, figure, from_pos, to_pos, taken_figure=None, is_rook=None, transform_to=None) -> None:
+    def __init__(self, figure=None, from_pos=None, to_pos=None, taken_figure=None, is_rook=None, transform_to=None) -> None:
         self.is_rook = is_rook
         self.to_pos = to_pos
         self.from_pos = from_pos
         self.figure = figure
         self.transform_to = transform_to
         self.taken_figure = taken_figure
+
+    @classmethod
+    def from_char(cls, data):
+        pos = data.split('-')
+        return cls(from_pos=Position(pos[0]), to_pos=Position(pos[1]))
 
     def __str__(self):
         return "%s%s%s%s" % (

@@ -36,7 +36,7 @@ class TestBoard(object):
 
     def test_board_move(self):
         board = Board(InitialPosition())
-        board.make_move(Position.char('e2'), Position.char('e4'))
+        board.make_move(Movement.from_char('e2-e4'))
         assert len(board.moves) == 1
         board.rollback_move()
         assert len(board.moves) == 0
@@ -78,22 +78,17 @@ class TestBoard(object):
         board.put_figures([p1, p2])
 
         m = board.legal_moves(Player.WHITE)[0]
-        board.make_move(m.from_pos, m.to_pos)
+        board.make_move(m)
 
         assert board.has_moved(p1)
         assert not board.has_moved(p2)
 
     def test_check_position(self):
-        board = Board(EmptyPosition())
-
-        k = King(Player.WHITE, Position('e1'))
-        r = Rook(Player.BLACK, Position('a7'))
-        board.put_figures([k, r])
-
+        board = Board(PredefinedFENPosition('3k4/r7/8/8/8/8/8/4K3'))
         assert not board.has_check(Player.WHITE)
         assert not board.has_check(Player.BLACK)
 
-        board.make_move(r.position, Position('a1'))
+        board.make_move(Movement.from_char('a7-a1'))
         assert board.has_check(Player.WHITE)
         assert not board.has_check(Player.BLACK)
         pass
