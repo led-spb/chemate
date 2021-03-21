@@ -1,7 +1,7 @@
 from typing import Iterator
 
 from chemate.figure import King, Figure
-from chemate.utils import Movement
+from chemate.utils import Movement, Position
 
 
 class Board(object):
@@ -82,6 +82,16 @@ class Board(object):
         figure.position = move.to_pos
         figure.board = self
 
+        # make rook movement
+        if move.rook is not None:
+            rook = move.rook
+            long = rook.position.x - move.from_pos.x < 0
+            new_rook_pos = Position(3 if long else 5, rook.position.y)
+            self.board[rook.position.index] = None
+            self.board[new_rook_pos.index] = rook
+            rook.position = new_rook_pos
+        pass
+
     def rollback_move(self):
         """
         Rollback last move
@@ -94,6 +104,17 @@ class Board(object):
         self.board[last_move.from_pos.index] = last_move.figure
         self.board[last_move.to_pos.index] = last_move.taken_figure or None
         last_move.figure.position = last_move.from_pos
+
+        # Restore rook position
+        if last_move.rook is not None:
+            rook = last_move.rook
+            long = rook.position.x - last_move.from_pos.x < 0
+            new_rook_pos = Position(0 if long else 7, rook.position.y)
+            self.board[rook.position.index] = None
+            self.board[new_rook_pos.index] = rook
+            rook.position = new_rook_pos
+
+
         # restore balance
         if last_move.taken_figure is not None:
             self.balance += last_move.taken_figure.price

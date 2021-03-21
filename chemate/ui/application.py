@@ -195,8 +195,8 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
             self.statusbar.showMessage(result)
             return
 
-        # When movement is transform pawn, need to build new scene
-        if movement.transform_to is not None:
+        # When movement is transform pawn or rook, need to build new scene
+        if movement.transform_to is not None or movement.rook is not None:
             self.init_board()
 
         if self.turn != self.human:

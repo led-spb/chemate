@@ -217,6 +217,7 @@ class Queen(Figure):
 class King(Figure):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.home_position = Position('e1') if self.color == Player.WHITE else Position('e8')
         self._price = 90
 
     def available_moves(self):
@@ -229,40 +230,42 @@ class King(Figure):
                                        self.gen_position_by_moves(Direction.down, limit=1),
                                        self.gen_position_by_moves(Direction.left, limit=1)):
             yield Movement(self, self.position, new_pos)
-        # TODO: make rook movement
+        # Unable to rook when king already moved or has check
+
+        if self.position != self.home_position or self.board.has_moved(self):
+            return
+
+        yield from self.rook_moves(False)
+        yield from self.rook_moves(True)
+        pass
 
     @Figure.char.getter
     def char(self):
         return 'K' if self.color == Player.WHITE else 'k'
 
     def rook_moves(self, long):
-        # Unable to rook when king already moved
-        if self.board.has_moved(self):
-            return
 
         if long:
-            empty_pos = [
+            positions = [
                 Position(self.position.x - 1, self.position.y),
                 Position(self.position.x - 2, self.position.y),
                 Position(self.position.x - 3, self.position.y),
             ]
+            new_pos = Position(self.position.x - 2, self.position.y)
         else:
-            empty_pos = [
+            positions = [
                 Position(self.position.x + 1, self.position.y),
                 Position(self.position.x + 2, self.position.y),
             ]
-        for p in empty_pos:
+            new_pos = Position(self.position.x + 2, self.position.y)
+        # unable to rook is between figures hasn't empty cells
+        for p in positions:
             if self.board.get_figure(p):
                 return
 
-        p = Position(0 if long else 7, self.position.y)
-        rook = self.board.get_figure(p)
-
+        rook = self.board.get_figure(Position(0 if long else 7, self.position.y))
         # Unable to rook when rook already moved
         if rook is None or not isinstance(rook, Rook) or rook.color != self.color or self.board.has_moved(rook):
             return
 
-        # Unable to rook then check
-        if self.board.has_check(self.color):
-            return
-        pass
+        yield Movement(figure=self, from_pos=self.position, to_pos=new_pos, rook=rook)

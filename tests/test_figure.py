@@ -1,3 +1,4 @@
+import pytest
 from chemate.figure import *
 from chemate.board import Board
 from chemate.positions import EmptyPosition, PredefinedFENPosition
@@ -190,4 +191,8 @@ class TestRook(object):
         for movement in rook.available_moves():
             assert movement.to_pos != Position.char('a3')
             assert movement.to_pos != Position.char('a5')
-            #board.rollback_move()
+        pass
+
+    @pytest.mark.skip
+    def test_rook(self):
+        pass

@@ -1,6 +1,3 @@
-from collections import namedtuple
-from typing import Iterable, Tuple, Any
-
 import chemate.figure
 
 
@@ -80,8 +77,8 @@ class Movement(object):
     """
     This class describes one movement on board
     """
-    def __init__(self, figure=None, from_pos=None, to_pos=None, taken_figure=None, is_rook=None, transform_to=None) -> None:
-        self.is_rook = is_rook
+    def __init__(self, figure=None, from_pos=None, to_pos=None, taken_figure=None, rook=None, transform_to=None) -> None:
+        self.rook = rook
         self.to_pos = to_pos
         self.from_pos = from_pos
         self.figure = figure
