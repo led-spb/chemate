@@ -37,6 +37,8 @@ class TestBoard(object):
     def test_board_move(self):
         board = Board(InitialPosition())
         board.make_move(Movement.from_char('e2-e4'))
+        assert len(list(board.figures())) == 32, "After move all figures same"
+
         assert len(board.moves) == 1
         board.rollback_move()
         assert len(board.moves) == 0
@@ -64,6 +66,11 @@ class TestBoard(object):
         moves = board.legal_moves(Player.WHITE)
         assert len(moves) == 3
 
+        board = Board(PredefinedFENPosition('7k/8/8/p7/8/7P/5QP1/2r3K1'))
+        moves = board.legal_moves(Player.WHITE)
+        assert len(moves) == 3
+
+
         # Check and mate
         board = Board(PredefinedFENPosition('7k/8/p7/8/3b4/8/6PP/2r3K1'))
         moves = board.legal_moves(Player.WHITE)
@@ -73,8 +80,8 @@ class TestBoard(object):
     def test_has_moved(self):
         board = Board(EmptyPosition())
 
-        p1 = Pawn(Player.WHITE, Position('a2'))
-        p2 = Pawn(Player.BLACK, Position('a7'))
+        p1 = Pawn(Player.WHITE, Position.from_char('a2'))
+        p2 = Pawn(Player.BLACK, Position.from_char('a7'))
         board.put_figures([p1, p2])
 
         m = board.legal_moves(Player.WHITE)[0]
@@ -92,3 +99,17 @@ class TestBoard(object):
         assert board.has_check(Player.WHITE)
         assert not board.has_check(Player.BLACK)
         pass
+
+    def test_rollback_move(self):
+        board = Board(PredefinedFENPosition('1r6/7K/2N5/8/8/k7/8/8'))
+        c6 = board.get_figure(Position.from_char('c6'))
+        moves = c6.available_moves()
+        move = next(filter(lambda x: x.to_pos == Position.from_char('b8'), moves))
+        assert move is not None
+        board.make_move(move)
+        assert board.get_figure(Position.from_char('b8')) is not None
+        assert board.get_figure(Position.from_char('c6')) is None
+
+        board.rollback_move()
+        assert board.get_figure(Position.from_char('b8')) is not None
+        assert board.get_figure(Position.from_char('c6')) is not None

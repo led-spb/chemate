@@ -5,38 +5,35 @@ class Position(object):
     """
     This class describes figure position at board
     """
-    __slots__ = ['x', 'y']
+    # __slots__ = ['x', 'y', 'index']
+    _slots = ['index']
 
-    def __init__(self, *args):
-        if type(args[0]) == str:
-            value = args[0]
-            x = ord(value.lower()[0]) - ord('a')
-            y = int(value[1]) - 1
-        else:
-            x = args[0]
-            y = args[1]
-        self.x = x
-        self.y = y
+    def __init__(self, index):
+        self.index = index
 
     @classmethod
-    def char(cls, value):
+    def from_char(cls, value):
         x = ord(value.lower()[0]) - ord('a')
         y = int(value[1])-1
-        return cls(x, y)
+        return cls.from_xy(x, y)
+
+    @classmethod
+    def from_xy(cls, x, y):
+        return cls(y*8+x)
 
     def is_last_line_for(self, color):
         return (self.y == 7 and color == Player.WHITE) or (self.y == 0 and color == Player.BLACK)
 
     @property
-    def index(self):
-        """
-        Returns index in flat array
-        :return: int
-        """
-        return self.y*8 + self.x
+    def x(self):
+        return self.index % 8
+
+    @property
+    def y(self):
+        return self.index // 8
 
     def __add__(self, other):
-        return Position(self.x + other.x, self.y + other.y)
+        return Position(self.index + other)
 
     def __str__(self):
         """
@@ -53,15 +50,14 @@ class Direction(object):
     """
     This class describes directions for move
     """
-    up = Position(0, 1)
-    down = Position(0, -1)
-    left = Position(-1, 0)
-    right = Position(1, 0)
-
-    up_left = Position(-1, 1)
-    up_right = Position(1, 1)
-    down_left = Position(-1, -1)
-    down_right = Position(1, -1)
+    UP = 8
+    DOWN = -8
+    LEFT = -1
+    RIGHT = 1
+    UP_LEFT = 7
+    UP_RIGHT = 9
+    DOWN_LEFT = -9
+    DOWN_RIGHT = -7
 
 
 class Player(object):
@@ -88,7 +84,7 @@ class Movement(object):
     @classmethod
     def from_char(cls, data):
         pos = data.split('-')
-        return cls(from_pos=Position(pos[0]), to_pos=Position(pos[1]))
+        return cls(from_pos=Position.from_char(pos[0]), to_pos=Position.from_char(pos[1]))
 
     def __str__(self):
         return "%s%s%s%s" % (
@@ -108,6 +104,6 @@ class StringPainter(Painter):
     def draw_board(self, board, **args):
         lines = [['.' for x in range(8)] for y in range(8)]
         for figure in board.figures():
-            lines[7-figure.position.y][figure.position.x] = figure.char
+            lines[7-figure.position.y][figure.position.x] = figure.from_char
 
         return "\n".join([" ".join(line) for line in lines])

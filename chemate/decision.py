@@ -10,7 +10,7 @@ class DecisionTree(object):
         self.board = board
         self.best_moves = None
         self.max_level = max_level
-        self._central = [Position('d4'), Position('e4'), Position('d5'), Position('e5')]
+        self._central = [Position.from_char('d4'), Position.from_char('e4'), Position.from_char('d5'), Position.from_char('e5')]
         self._estimates = {}
         pass
 
@@ -27,13 +27,15 @@ class DecisionTree(object):
 
         for move in self.board.legal_moves(color):
             self.board.make_move(move)
-            score = self.mini_max(-color, depth-1, -10000, 10000)
+            try:
+                score = self.mini_max(-color, depth-1, -10000, 10000)
 
-            if (color == Player.WHITE and score > best_score) \
-                    or (color == Player.BLACK and score < best_score):
-                best_move = move
-                best_score = score
-            self.board.rollback_move()
+                if (color == Player.WHITE and score > best_score) \
+                        or (color == Player.BLACK and score < best_score):
+                    best_move = move
+                    best_score = score
+            finally:
+                self.board.rollback_move()
 
         return best_move, best_score
 

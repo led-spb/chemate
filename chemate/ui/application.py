@@ -94,10 +94,9 @@ class FigureItem(QGraphicsItem):
                 or self.game.turn != self.game.human:
             return
 
-        legal_moves = [m for m in self.figure.board.legal_moves(self.figure.color) if m.figure == self.figure]
         drag = QDrag(event.widget())
         mime = QMimeData()
-        mime.legal_moves = legal_moves
+        mime.legal_moves = self.figure.board.legal_moves(self.figure.color, self.figure)
 
         rect = self.boundingRect()
         pixmap = QPixmap(rect.width(), rect.height())
@@ -151,7 +150,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
     def init_board(self):
         self.scene.clear()
         for i in range(64):
-            cell = CellItem(self, Position(i % 8, int(i/8)))
+            cell = CellItem(self, Position.from_xy(i % 8, int(i/8)))
             self.scene.addItem(cell)
 
         for figure in self.board.figures():

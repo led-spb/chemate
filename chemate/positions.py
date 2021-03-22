@@ -34,7 +34,7 @@ class PredefinedFENPosition(PositionFactory):
             if chr.isdigit():
                 x += int(chr)
                 continue
-            yield FigureCreator.by_char(chr)(Position(x, y))
+            yield FigureCreator.by_char(chr)(Position.from_xy(x, y))
             x = x + 1
         yield from ()
 

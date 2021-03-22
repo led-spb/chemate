@@ -86,7 +86,7 @@ class Board(object):
         if move.rook is not None:
             rook = move.rook
             long = rook.position.x - move.from_pos.x < 0
-            new_rook_pos = Position(3 if long else 5, rook.position.y)
+            new_rook_pos = Position.from_xy(3 if long else 5, rook.position.y)
             self.board[rook.position.index] = None
             self.board[new_rook_pos.index] = rook
             rook.position = new_rook_pos
@@ -109,13 +109,12 @@ class Board(object):
         if last_move.rook is not None:
             rook = last_move.rook
             long = rook.position.x - last_move.from_pos.x < 0
-            new_rook_pos = Position(0 if long else 7, rook.position.y)
+            new_rook_pos = Position.from_xy(0 if long else 7, rook.position.y)
             self.board[rook.position.index] = None
             self.board[new_rook_pos.index] = rook
             rook.position = new_rook_pos
 
-
-        # restore balance
+        # Restore balance
         if last_move.taken_figure is not None:
             self.balance += last_move.taken_figure.price
         if last_move.transform_to is not None:
@@ -140,28 +139,6 @@ class Board(object):
                 yield figure
         pass
 
-    def check_position(self, color, position):
-        """
-        Check specified position
-        :param color:
-        :param position:
-        :return: 0 - empty
-                 1 - opponent figure
-                 2 - own figure
-                 3 - out of box
-        """
-        # Move to positions out of box are ot allowed
-        if position.x > 7 or position.x < 0 or position.y > 7 or position.y < 0:
-            return 3
-
-        # Check for target of move
-        figure = self.board[position.index]
-        if figure is None:
-            return 0
-
-        # Can't move to same player's figure, otherwise we can
-        return 1 if figure.color != color else 2
-
     def all_moves(self, color=None, taken_only=False) -> Iterator[Movement]:
         """
         Return list of available moves without
@@ -179,15 +156,17 @@ class Board(object):
                     yield move
         pass
 
-    def legal_moves(self, color):
+    def legal_moves(self, color, figure=None):
         """
         Return only legal moves for player
+        :param figure: Figure
         :param color: player color
         :return: list of Movement object
         """
-        our_moves = list(self.all_moves(color))
         legal_moves = []
-        for move in our_moves:
+        for move in self.all_moves(color):
+            if figure is not None and move.figure != figure:
+                continue
             # Try to make move and when check position
             self.make_move(move)
             if not self.has_check(color):

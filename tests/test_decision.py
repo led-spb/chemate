@@ -32,12 +32,12 @@ class TestDecision(object):
     def test_case_1(self):
         board = Board(EmptyPosition())
         q = [
-            Queen(Player.WHITE, Position('d2')),
+            Queen(Player.WHITE, Position.from_char('d2')),
 
-            Pawn(Player.BLACK, Position('h6')),
-            Knight(Player.BLACK, Position('d4')),
-            Rook(Player.BLACK, Position('a5')),
-            Bishop(Player.BLACK, Position('d8'))
+            Pawn(Player.BLACK, Position.from_char('h6')),
+            Knight(Player.BLACK, Position.from_char('d4')),
+            Rook(Player.BLACK, Position.from_char('a5')),
+            Bishop(Player.BLACK, Position.from_char('d8'))
         ]
         board.put_figures(q)
         decision = DecisionTree(board=board, max_level=2)
@@ -48,8 +48,8 @@ class TestDecision(object):
     def test_case_2(self):
         board = Board(EmptyPosition())
         q = [
-            Queen(Player.WHITE, Position('d4')),
-            Bishop(Player.BLACK, Position('b6'))
+            Queen(Player.WHITE, Position.from_char('d4')),
+            Bishop(Player.BLACK, Position.from_char('b6'))
         ]
         board.put_figures(q)
         decision = DecisionTree(board=board, max_level=2)
@@ -60,8 +60,8 @@ class TestDecision(object):
     def test_case_3(self):
         board = Board(EmptyPosition())
         q = [
-            Queen(Player.WHITE, Position('b6')),
-            Rook(Player.BLACK, Position('a6')),
+            Queen(Player.WHITE, Position.from_char('b6')),
+            Rook(Player.BLACK, Position.from_char('a6')),
         ]
         board.put_figures(q)
         decision = DecisionTree(board=board, max_level=2)
@@ -72,9 +72,9 @@ class TestDecision(object):
     def test_case_4(self):
         board = Board(EmptyPosition())
         q = [
-            Bishop(Player.WHITE, Position('e8')),
-            King(Player.BLACK, Position('d8')),
-            King(Player.WHITE, Position('a1')),
+            Bishop(Player.WHITE, Position.from_char('e8')),
+            King(Player.BLACK, Position.from_char('d8')),
+            King(Player.WHITE, Position.from_char('a1')),
         ]
         board.put_figures(q)
         decision = DecisionTree(board=board, max_level=2)
