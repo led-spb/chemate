@@ -5,7 +5,6 @@ class Position(object):
     """
     This class describes figure position at board
     """
-    # __slots__ = ['x', 'y', 'index']
     _slots = ['index']
 
     def __init__(self, index):
@@ -69,6 +68,7 @@ class Player(object):
 
 
 class Movement(object):
+    __slots__ = ["figure", "from_pos", "to_pos", "taken_figure", "rook", "transform_to"]
 
     """
     This class describes one movement on board

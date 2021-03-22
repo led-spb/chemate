@@ -1,7 +1,7 @@
-from typing import Iterator
+from typing import Iterator, List
 
 from chemate.figure import King, Figure
-from chemate.utils import Movement, Position
+from chemate.utils import Movement, Position, Direction
 
 
 class Board(object):
@@ -10,6 +10,7 @@ class Board(object):
         self.board = None
         self.moves = []
         self.balance = 0
+        self.positions = []
         self.init()
 
     def __hash__(self):
@@ -27,6 +28,8 @@ class Board(object):
         :return: None
         """
         self.board = [None for x in range(64)]
+        self.moves = []
+        self.balance = 0
 
     def init(self):
         """
@@ -35,6 +38,44 @@ class Board(object):
         """
         self.clear()
         self.put_figures(self.position_factory.figures())
+        self.cache_positions()
+
+    def cache_positions(self):
+        self.positions = [None for x in range(64)]
+        cache = [Position(index) for index in range(64)]
+        for pos in cache:
+            variants = {}
+            variants[Direction.UP] = [cache[pos.index + Direction.UP*i] for i in range(1, 8-pos.y)]
+            variants[Direction.DOWN] = [cache[pos.index + Direction.DOWN*i] for i in range(1, pos.y+1)]
+            variants[Direction.RIGHT] = [cache[pos.index + Direction.RIGHT*i] for i in range(1, 8-pos.x)]
+            variants[Direction.LEFT] = [cache[pos.index + Direction.LEFT*i] for i in range(1, pos.x+1)]
+
+            variants[Direction.UP_LEFT] = [cache[pos.index + Direction.UP_LEFT*i] for i in range(1, min(8-pos.y, pos.x+1))]
+            variants[Direction.UP_RIGHT] = [cache[pos.index + Direction.UP_RIGHT*i] for i in range(1, min(8-pos.y, 8-pos.x))]
+            variants[Direction.DOWN_LEFT] = [cache[pos.index + Direction.DOWN_LEFT*i] for i in range(1, min(pos.y+1, pos.x+1))]
+            variants[Direction.DOWN_RIGHT] = [cache[pos.index + Direction.DOWN_RIGHT*i] for i in range(1, min(pos.y+1, 8-pos.x))]
+            self.positions[pos.index] = variants
+        pass
+
+    def gen_positions_by_dir(self, position, direction, color=None, limit=8) -> List[Position]:
+        """
+        Generate continues moves in direction from current position
+        :param position: Position
+        :param direction: Direction
+        :param color: Stop when specified figure is occured
+        :param limit: Check only first N moves in this direction
+        :return: Iterator for Position object with available positions
+        """
+        positions = self.positions[position.index][direction]
+        for pos in positions:
+            figure = self.board[pos.index]
+            if figure is not None and (color is None or figure.color == color):
+                return
+            yield pos
+            limit = limit - 1
+            if limit == 0 or figure is not None:
+                return
+        pass
 
     def put_figure(self, figure):
         """

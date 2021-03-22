@@ -2,12 +2,14 @@ import cProfile
 from chemate.board import Board
 from chemate.decision import DecisionTree
 from chemate.positions import InitialPosition
+from chemate.utils import Player
 
 
 def start():
     board = Board(InitialPosition())
-    decision = DecisionTree(board, max_level=2)
-    decision.best_move(1)
+    decision = DecisionTree(board, max_level=4)
+    decision.best_move(Player.WHITE)
 
 
-cProfile.run('start()', sort="time")
+if __name__ == '__main__':
+    cProfile.run('start()', filename='output.prof')

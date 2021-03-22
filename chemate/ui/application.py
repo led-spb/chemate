@@ -164,7 +164,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         self.scene = QGraphicsScene()
         self.viewBoard.setScene(self.scene)
         self.turn = Player.WHITE
-        self.decision = DecisionTree(board=self.board, max_level=2)
+        self.decision = DecisionTree(board=self.board, max_level=3)
 
         self.init_board()
         pass

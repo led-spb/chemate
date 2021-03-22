@@ -1,5 +1,5 @@
 import functools
-from typing import Iterator
+from typing import Iterator, List
 
 from chemate.utils import Position, Direction, Player, Movement
 import itertools
@@ -55,34 +55,6 @@ class Figure(object):
         """
         self.board.make_move(Movement(from_pos=self.position, to_pos=new_position))
 
-    def gen_position_by_moves(self, direction, only_empty=False, limit=8) -> Iterator[Position]:
-        """
-        Generate continues moves in direction from current position
-        :param direction: Position
-        :param only_empty: Generate new posiotion if cell is empty only
-        :param limit: Check only first moves in this direction
-        :return: Iterator for Position object with available positions
-        """
-        position = Position(self.position.index)
-        for i in range(limit):
-            if position.x == 0 and direction in [Direction.LEFT, Direction.UP_LEFT, Direction.DOWN_LEFT]:
-                return
-            if position.x == 7 and direction in [Direction.RIGHT, Direction.UP_RIGHT, Direction.DOWN_RIGHT]:
-                return
-            if position.y == 0 and direction in [Direction.DOWN, Direction.DOWN_LEFT, Direction.DOWN_RIGHT]:
-                return
-            if position.y == 7 and direction in [Direction.UP, Direction.UP_LEFT, Direction.UP_RIGHT]:
-                return
-
-            position = position + direction
-            figure = self.board.get_figure(position)
-            if figure is not None and (only_empty or figure.color == self.color):
-                return
-            yield position
-            if figure is not None:
-                return
-        pass
-
 
 class FigureCreator:
     @staticmethod
@@ -109,10 +81,10 @@ class Pawn(Figure):
 
     def available_moves(self):
         # Pawn can move 1 (or 2 on first move) on forward
-        in_initial_pos = self.position.y == (1 if self.color == Player.WHITE else 6)
-        for new_pos in self.gen_position_by_moves(
-                            direction=Direction.UP if self.color == Player.WHITE else Direction.DOWN,
-                            only_empty=True, limit=2 if in_initial_pos else 1):
+        direction = Direction.UP if self.color == Player.WHITE else Direction.DOWN
+        limit = 2 if self.position.y == (1 if self.color == Player.WHITE else 6) else 1
+
+        for new_pos in self.board.gen_positions_by_dir(self.position, direction, color=None, limit=limit):
             # Transformation on last line
             if new_pos.is_last_line_for(self.color):
                 for new_figure in self._gen_replace_figures():
@@ -121,13 +93,20 @@ class Pawn(Figure):
                 yield Movement(self, self.position, new_pos)
 
         # Pawn can fight only 1 on forward diagonal
-        for new_pos in itertools.chain(
-            self.gen_position_by_moves(
-                Direction.UP_LEFT if self.color == Player.WHITE else Direction.DOWN_LEFT, limit=1
-            ),
-            self.gen_position_by_moves(
-                Direction.UP_RIGHT if self.color == Player.WHITE else Direction.DOWN_RIGHT, limit=1
-            )):
+        all_pos = list(
+            itertools.chain(
+                self.board.gen_positions_by_dir(
+                    self.position,
+                    Direction.UP_LEFT if self.color == Player.WHITE else Direction.DOWN_LEFT,
+                    color=self.color, limit=1
+                ),
+                self.board.gen_positions_by_dir(
+                    self.position,
+                    Direction.UP_RIGHT if self.color == Player.WHITE else Direction.DOWN_RIGHT,
+                    color=self.color, limit=1))
+        )
+
+        for new_pos in all_pos:
             if self.board.get_figure(new_pos) is None:
                 continue
             if new_pos.is_last_line_for(self.color):
@@ -178,10 +157,11 @@ class Bishop(Figure):
         self._price = 3
 
     def available_moves(self):
-        for new_pos in itertools.chain(self.gen_position_by_moves(Direction.UP_LEFT),
-                                       self.gen_position_by_moves(Direction.UP_RIGHT),
-                                       self.gen_position_by_moves(Direction.DOWN_LEFT),
-                                       self.gen_position_by_moves(Direction.DOWN_RIGHT)):
+        for new_pos in itertools.chain(
+               self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, self.color),
+               self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, self.color),
+               self.board.gen_positions_by_dir(self.position, Direction.DOWN_LEFT, self.color),
+               self.board.gen_positions_by_dir(self.position, Direction.DOWN_RIGHT, self.color)):
             yield Movement(self, self.position, new_pos)
 
     @Figure.char.getter
@@ -195,10 +175,11 @@ class Rook(Figure):
         self._price = 5
 
     def available_moves(self):
-        for new_pos in itertools.chain(self.gen_position_by_moves(Direction.UP),
-                                       self.gen_position_by_moves(Direction.RIGHT),
-                                       self.gen_position_by_moves(Direction.DOWN),
-                                       self.gen_position_by_moves(Direction.LEFT)):
+        for new_pos in itertools.chain(
+                self.board.gen_positions_by_dir(self.position, Direction.UP, self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.RIGHT, self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN, self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.LEFT, self.color)):
             yield Movement(self, self.position, new_pos)
 
     @Figure.char.getter
@@ -212,14 +193,15 @@ class Queen(Figure):
         self._price = 9
 
     def available_moves(self):
-        for new_pos in itertools.chain(self.gen_position_by_moves(Direction.UP_LEFT),
-                                       self.gen_position_by_moves(Direction.UP_RIGHT),
-                                       self.gen_position_by_moves(Direction.DOWN_RIGHT),
-                                       self.gen_position_by_moves(Direction.DOWN_LEFT),
-                                       self.gen_position_by_moves(Direction.UP),
-                                       self.gen_position_by_moves(Direction.RIGHT),
-                                       self.gen_position_by_moves(Direction.DOWN),
-                                       self.gen_position_by_moves(Direction.LEFT)):
+        for new_pos in itertools.chain(
+                self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN_RIGHT, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN_LEFT, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.UP, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.RIGHT, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.LEFT, color=self.color)):
             yield Movement(self, self.position, new_pos)
 
     @Figure.char.getter
@@ -234,17 +216,18 @@ class King(Figure):
         self._price = 90
 
     def available_moves(self):
-        for new_pos in itertools.chain(self.gen_position_by_moves(Direction.UP_LEFT, limit=1),
-                                       self.gen_position_by_moves(Direction.UP_RIGHT, limit=1),
-                                       self.gen_position_by_moves(Direction.DOWN_RIGHT, limit=1),
-                                       self.gen_position_by_moves(Direction.DOWN_LEFT, limit=1),
-                                       self.gen_position_by_moves(Direction.UP, limit=1),
-                                       self.gen_position_by_moves(Direction.RIGHT, limit=1),
-                                       self.gen_position_by_moves(Direction.DOWN, limit=1),
-                                       self.gen_position_by_moves(Direction.LEFT, limit=1)):
+        for new_pos in itertools.chain(
+                self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN_RIGHT, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN_LEFT, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.UP, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.RIGHT, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN, limit=1, color=self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.LEFT, limit=1, color=self.color)):
             yield Movement(self, self.position, new_pos)
-        # Unable to rook when king already moved or has check
 
+        # Unable to rook when king already moved or has check
         if self.position != self.home_position or self.board.has_moved(self):
             return
 
@@ -267,5 +250,5 @@ class King(Figure):
         # Unable to rook when rook already moved
         if rook is None or not isinstance(rook, Rook) or rook.color != self.color or self.board.has_moved(rook):
             return
-        check_pos = Position(self.position.index + (-3 if long else 2))
+        check_pos = Position(self.position.index + (-2 if long else 2))
         yield Movement(figure=self, from_pos=self.position, to_pos=check_pos, rook=rook)
