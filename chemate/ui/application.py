@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphics
 from PyQt5.QtGui import QFont, QFontDatabase, QDrag, QPainter, QPixmap, QTransform
 from PyQt5.QtCore import Qt, QMimeData, QRectF, QLineF, QPointF, QPoint, QThread
 import chemate.ui.design
-from chemate.positions import InitialPosition
+from chemate.positions import InitialPosition, PredefinedFENPosition
 from chemate.utils import Position, Player
 from chemate.board import Board
 from chemate.decision import DecisionTree
@@ -55,11 +55,11 @@ class CellItem(QGraphicsItem):
         super().dragLeaveEvent(event)
 
     def dropEvent(self, event):
-        all_moves = event.mimeData().legal_moves
-        for move in all_moves:
+        for move in event.mimeData().legal_moves:
             if move.to_pos == self.position:
-                self.game.make_move(move)
+                self.game.do_move(move)
                 return
+        pass
 
 
 class FigureItem(QGraphicsItem):
@@ -90,8 +90,8 @@ class FigureItem(QGraphicsItem):
                 QPointF(event.buttonDownScreenPos(Qt.LeftButton))
         ).length()
         if distance < QApplication.startDragDistance() \
-                or self.figure.color != self.game.human \
-                or self.game.turn != self.game.human:
+                or self.figure.color != self.game.turn \
+                or self.game.turn != self.game.human and self.game.ai_level >0:
             return
 
         drag = QDrag(event.widget())
@@ -120,7 +120,7 @@ class FigureItem(QGraphicsItem):
 
 
 class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
-    def __init__(self):
+    def __init__(self, position=None, ai_level=None):
         super().__init__()
 
         self.board = None
@@ -130,6 +130,8 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         self.turn = Player.WHITE
         self.cell_size = 64
         self.decision = None
+        self.position = position
+        self.ai_level = 2 if ai_level is None else ai_level
 
         self.setupUi(self)
 
@@ -159,17 +161,17 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         pass
 
     def new_game(self):
-        self.board = Board(InitialPosition())
+        self.board = Board(InitialPosition() if self.position is None else PredefinedFENPosition(self.position))
 
         self.scene = QGraphicsScene()
         self.viewBoard.setScene(self.scene)
         self.turn = Player.WHITE
-        self.decision = DecisionTree(board=self.board, max_level=3)
+        self.decision = DecisionTree(board=self.board, max_level=self.ai_level)
 
         self.init_board()
         pass
 
-    def make_move(self, movement):
+    def do_move(self, movement):
         """
         :type movement: Movement
         """
@@ -198,7 +200,7 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
         if movement.transform_to is not None or movement.rook is not None:
             self.init_board()
 
-        if self.turn != self.human:
+        if self.turn != self.human and self.ai_level > 0:
             self.start_think(self.turn)
 
     def rollback_move(self):
@@ -219,13 +221,19 @@ class GameWindow(QMainWindow, chemate.ui.design.Ui_MainWindow):
     def think_done(self):
         print("Think done, score: %.2f" % self.think_thread.score)
         if self.think_thread.move is not None:
-            self.make_move(self.think_thread.move)
+            self.do_move(self.think_thread.move)
         pass
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--position')
+    parser.add_argument('--ai-level', type=int, default=2)
+    args = parser.parse_args()
+
     app = QApplication([])
-    view = GameWindow()
+    view = GameWindow(position=args.position, ai_level=args.ai_level)
     view.show()
     try:
         app.exec()

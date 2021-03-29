@@ -1,7 +1,7 @@
 from typing import Iterator, List
 
 from chemate.figure import King, Figure
-from chemate.utils import Movement, Position, Direction
+from chemate.utils import Movement, Position, Direction, Player
 
 
 class Board(object):
@@ -12,6 +12,7 @@ class Board(object):
         self.balance = 0
         self.positions = []
         self.init()
+        self.check_status = False
 
     def __hash__(self):
         """
@@ -82,7 +83,7 @@ class Board(object):
         Put a figure on the board
         :return: None
         """
-        self.board[figure.position.y * 8 + figure.position.x] = figure
+        self.board[figure.position.index] = figure
         figure.board = self
         self.balance += figure.price
         pass
@@ -116,7 +117,6 @@ class Board(object):
         if move.transform_to is not None:
             self.balance += move.transform_to.price
 
-        self.moves.append(move)
         figure = move.transform_to or move.figure
         self.board[move.from_pos.index] = None
         self.board[move.to_pos.index] = figure
@@ -131,6 +131,19 @@ class Board(object):
             self.board[rook.position.index] = None
             self.board[new_rook_pos.index] = rook
             rook.position = new_rook_pos
+
+        hash_board = hash(self)
+
+        # Set check flag for movement
+        move.is_check = False
+        for new_move in figure.available_moves(hash_board):
+            if isinstance(new_move.taken_figure, King):
+                move.is_check = True
+                break
+        self.check_status = move.is_check
+
+        # Save movement in stack
+        self.moves.append(move)
         pass
 
     def rollback_move(self):
@@ -160,6 +173,12 @@ class Board(object):
             self.balance += last_move.taken_figure.price
         if last_move.transform_to is not None:
             self.balance -= last_move.transform_to.price
+
+        # Restore check status
+        if len(self.moves) > 0:
+            self.check_status = self.moves[-1].is_check
+        else:
+            self.check_status = False
         return last_move
 
     def put_figures(self, it):
@@ -187,17 +206,18 @@ class Board(object):
         :param taken_only: only move when have take another figure
         :return: Iterator object
         """
+        board_hash = hash(self)
         for figure in self.board:
             if figure is None or (color is not None and figure.color != color):
                 continue
-            for move in figure.available_moves():
-                taken = self.get_figure(move.to_pos)
+            for move in figure.available_moves(board_hash):
+                taken = self.board[move.to_pos.index]
                 if taken is not None or not taken_only:
                     move.taken_figure = taken
                     yield move
         pass
 
-    def legal_moves(self, color, figure=None):
+    def legal_moves(self, color, figure=None) -> List[Movement]:
         """
         Return only legal moves for player
         :param figure: Figure
@@ -210,17 +230,18 @@ class Board(object):
                 continue
             # Try to make move and when check position
             self.make_move(move)
-            if not self.has_check(color):
+            if not self.test_for_check(color):
                 legal_moves.append(move)
             self.rollback_move()
         return legal_moves
 
-    def has_check(self, color):
+    def test_for_check(self, color):
         """
         Return true if current position has check for color player
         :param color:
         :return:
         """
+        # todo: проверять не все ходы соперника, а только тех фигур, кто на расстоянии атаки на нас
         for opposite_move in self.all_moves(color=-color, taken_only=True):
             if isinstance(opposite_move.taken_figure, King):
                 return True
@@ -232,7 +253,7 @@ class Board(object):
         :param color:
         :return:
         """
-        return self.has_check(color) and list(self.legal_moves(color)) == []
+        return self.test_for_check(color) and list(self.legal_moves(color)) == []
 
     def has_moved(self, figure):
         """

@@ -13,6 +13,7 @@ class Figure(object):
         self.board = None
         self.position = position
         self._price = 1
+        self._cache = {}
 
     @property
     def char(self):
@@ -41,7 +42,14 @@ class Figure(object):
         """
         return self.__class__(self.color, self.position)
 
-    def available_moves(self) -> Iterator[Movement]:
+    def available_moves(self, hash) -> List[Movement]:
+        if hash in self._cache:
+            return self._cache[hash]
+        moves = list(self.calculate_move())
+        self._cache[hash] = moves
+        return moves
+
+    def calculate_move(self) -> Iterator[Movement]:
         """
         Get available moves for current figure position
         :return: Iterator for chemate.utils.Position object with valid positions of this figure
@@ -79,7 +87,7 @@ class Pawn(Figure):
     def _gen_replace_figures(self):
         return [Queen(self.color, None), Rook(self.color, None), Knight(self.color, None), Bishop(self.color, None)]
 
-    def available_moves(self):
+    def calculate_move(self):
         # Pawn can move 1 (or 2 on first move) on forward
         direction = Direction.UP if self.color == Player.WHITE else Direction.DOWN
         limit = 2 if self.position.y == (1 if self.color == Player.WHITE else 6) else 1
@@ -126,7 +134,7 @@ class Knight(Figure):
         super().__init__(color, position)
         self._price = 3
 
-    def available_moves(self):
+    def calculate_move(self):
         all_positions = [
             (self.position.x+1, self.position.y+2),
             (self.position.x+2, self.position.y+1),
@@ -156,7 +164,7 @@ class Bishop(Figure):
         super().__init__(color, position)
         self._price = 3
 
-    def available_moves(self):
+    def calculate_move(self):
         for new_pos in itertools.chain(
                self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, self.color),
                self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, self.color),
@@ -174,7 +182,7 @@ class Rook(Figure):
         super().__init__(color, position)
         self._price = 5
 
-    def available_moves(self):
+    def calculate_move(self):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP, self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.RIGHT, self.color),
@@ -192,7 +200,7 @@ class Queen(Figure):
         super().__init__(color, position)
         self._price = 9
 
-    def available_moves(self):
+    def calculate_move(self):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, color=self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, color=self.color),
@@ -215,7 +223,7 @@ class King(Figure):
         self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
         self._price = 90
 
-    def available_moves(self):
+    def calculate_move(self):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, limit=1, color=self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, limit=1, color=self.color),
@@ -228,7 +236,7 @@ class King(Figure):
             yield Movement(self, self.position, new_pos)
 
         # Unable to rook when king already moved or has check
-        if self.position != self.home_position or self.board.has_moved(self):
+        if self.board.check_status or self.position != self.home_position or self.board.has_moved(self):
             return
 
         yield from self.rook_moves(False)

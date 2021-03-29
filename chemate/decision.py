@@ -10,7 +10,10 @@ class DecisionTree(object):
         self.board = board
         self.best_moves = None
         self.max_level = max_level
-        self._central = [Position.from_char('d4'), Position.from_char('e4'), Position.from_char('d5'), Position.from_char('e5')]
+        self._central = [Position.from_char('d4'),
+                         Position.from_char('e4'),
+                         Position.from_char('d5'),
+                         Position.from_char('e5')]
         self._estimates = {}
         pass
 
@@ -89,7 +92,6 @@ class DecisionTree(object):
 
         # Estimate quality position
         quality_estimate = self.board.balance
-
         position_estimate = 0
         # Position estimate if quality is equal
 

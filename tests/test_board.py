@@ -34,6 +34,11 @@ class TestBoard(object):
         assert len(list(board.find_figures(King, Player.BLACK))) == 1, "Need exact 1 black kings"
         pass
 
+    def test_board_legal_moves(self):
+        board = Board(PredefinedFENPosition('8/8/r4PK1/8/1k6/8/8/8'))
+        assert len(board.legal_moves(Player.WHITE)) == 7
+        pass
+
     def test_board_move(self):
         board = Board(InitialPosition())
         board.make_move(Movement.from_char('e2-e4'))
@@ -92,18 +97,18 @@ class TestBoard(object):
 
     def test_check_position(self):
         board = Board(PredefinedFENPosition('3k4/r7/8/8/8/8/8/4K3'))
-        assert not board.has_check(Player.WHITE)
-        assert not board.has_check(Player.BLACK)
+        assert not board.test_for_check(Player.WHITE)
+        assert not board.test_for_check(Player.BLACK)
 
         board.make_move(Movement.from_char('a7-a1'))
-        assert board.has_check(Player.WHITE)
-        assert not board.has_check(Player.BLACK)
+        assert board.test_for_check(Player.WHITE)
+        assert not board.test_for_check(Player.BLACK)
         pass
 
     def test_rollback_move(self):
         board = Board(PredefinedFENPosition('1r6/7K/2N5/8/8/k7/8/8'))
         c6 = board.get_figure(Position.from_char('c6'))
-        moves = c6.available_moves()
+        moves = c6.available_moves(hash(board))
         move = next(filter(lambda x: x.to_pos == Position.from_char('b8'), moves))
         assert move is not None
         board.make_move(move)

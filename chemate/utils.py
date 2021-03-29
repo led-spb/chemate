@@ -18,7 +18,8 @@ class Position(object):
 
     @classmethod
     def from_xy(cls, x, y):
-        return cls(y*8+x)
+        index = y*8+x
+        return cls(index)
 
     def is_last_line_for(self, color):
         return (self.y == 7 and color == Player.WHITE) or (self.y == 0 and color == Player.BLACK)
@@ -68,7 +69,7 @@ class Player(object):
 
 
 class Movement(object):
-    __slots__ = ["figure", "from_pos", "to_pos", "taken_figure", "rook", "transform_to"]
+    __slots__ = ["figure", "from_pos", "to_pos", "taken_figure", "rook", "transform_to", "is_check"]
 
     """
     This class describes one movement on board
@@ -80,6 +81,7 @@ class Movement(object):
         self.figure = figure
         self.transform_to = transform_to
         self.taken_figure = taken_figure
+        self.is_check = False
 
     @classmethod
     def from_char(cls, data):
@@ -87,11 +89,12 @@ class Movement(object):
         return cls(from_pos=Position.from_char(pos[0]), to_pos=Position.from_char(pos[1]))
 
     def __str__(self):
-        return "%s%s%s%s" % (
+        return "%s%s%s%s%s" % (
             '' if isinstance(self.figure, chemate.figure.Pawn) else self.figure.char.upper(),
             str(self.from_pos),
             '-' if self.taken_figure is None else 'x',
-            str(self.to_pos)
+            str(self.to_pos),
+            '+' if self.is_check else ''
         )
 
 
