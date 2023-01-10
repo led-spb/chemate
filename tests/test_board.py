@@ -75,7 +75,6 @@ class TestBoard(object):
         moves = board.legal_moves(Player.WHITE)
         assert len(moves) == 3
 
-
         # Check and mate
         board = Board(PredefinedFENPosition('7k/8/p7/8/3b4/8/6PP/2r3K1'))
         moves = board.legal_moves(Player.WHITE)

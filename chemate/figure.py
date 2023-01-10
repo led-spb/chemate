@@ -223,6 +223,9 @@ class King(Figure):
         self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
         self._price = 90
 
+    def available_moves(self, hash) -> List[Movement]:
+        return list(self.calculate_move())
+
     def calculate_move(self):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, limit=1, color=self.color),
@@ -236,7 +239,7 @@ class King(Figure):
             yield Movement(self, self.position, new_pos)
 
         # Unable to rook when king already moved or has check
-        if self.board.check_status or self.position != self.home_position or self.board.has_moved(self):
+        if self.position != self.home_position or self.board.has_moved(self):
             return
 
         yield from self.rook_moves(False)
@@ -248,7 +251,7 @@ class King(Figure):
         return 'K' if self.color == Player.WHITE else 'k'
 
     def rook_moves(self, long):
-        # unable to rook is between figures hasn't empty cells
+        # Unable to rook when between figures hasn't empty cells
         for i in range(-1 if long else 1, -4 if long else 3, -1 if long else 1):
             check_pos = Position(self.position.index + i)
             if self.board.get_figure(check_pos) is not None:
@@ -258,5 +261,14 @@ class King(Figure):
         # Unable to rook when rook already moved
         if rook is None or not isinstance(rook, Rook) or rook.color != self.color or self.board.has_moved(rook):
             return
+
+        # Unable to make rook then cells under pressure
+        opposite_moves = list(self.board.all_moves(self.color*-1))
+        for i in range(0, -3 if long else 3, -1 if long else 1):
+            check_pos = Position(self.position.index + i)
+            for move in opposite_moves:
+                if move.to_pos == check_pos:
+                    return
+
         check_pos = Position(self.position.index + (-2 if long else 2))
         yield Movement(figure=self, from_pos=self.position, to_pos=check_pos, rook=rook)

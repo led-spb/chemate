@@ -161,11 +161,143 @@ class TestKing(object):
         moves = board.legal_moves(Player.WHITE)
         assert len(moves) == 3
 
-    def test_rook(self):
+    def test_short_rook(self):
         board = Board(EmptyPosition())
         king = King(Player.WHITE, Position.from_char('e1'))
         rook = Rook(Player.WHITE, Position.from_char('h1'))
         board.put_figures([king, rook])
+
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 1, "Rook must be available"
+
+        # make and rollback move
+        board.make_move(next(iter(moves)))
+        assert board.get_figure(Position.from_char('f1')) == rook, 'After rook is invalid rook position'
+        assert board.get_figure(Position.from_char('g1')) == king, 'After rook is invalid king position'
+
+        board.rollback_move()
+        assert board.get_figure(Position.from_char('e1')) == king, 'Rollback after rook is invalid king position'
+        assert board.get_figure(Position.from_char('h1')) == rook, 'Rollback after rook is invalid rook position'
+
+    def test_short_rook_1(self):
+        board = Board(EmptyPosition())
+        king = King(Player.WHITE, Position.from_char('e1'))
+        rook = Rook(Player.WHITE, Position.from_char('h1'))
+        pawn = Pawn(Player.WHITE, Position.from_char('g1'))
+        board.put_figures([king, rook, pawn])
+
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when figures between"
+
+    def test_short_rook_2(self):
+        board = Board(EmptyPosition())
+        king = King(Player.WHITE, Position.from_char('e1'))
+        rook = Rook(Player.WHITE, Position.from_char('h1'))
+        board.put_figures([king, rook])
+
+        king.move(Position.from_char('e2'))
+        king.move(Position.from_char('e1'))
+
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when king has moved"
+
+    def test_short_rook_3(self):
+        board = Board(EmptyPosition())
+        king = King(Player.WHITE, Position.from_char('e1'))
+        rook = Rook(Player.WHITE, Position.from_char('h1'))
+        board.put_figures([king, rook])
+
+        rook.move(Position.from_char('g1'))
+        rook.move(Position.from_char('h1'))
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when rook is moved"
+
+    def test_short_rook_4(self):
+        board = Board(EmptyPosition())
+        king = King(Player.WHITE, Position.from_char('e1'))
+        rook = Rook(Player.WHITE, Position.from_char('h1'))
+        bishop = Bishop(Player.BLACK, Position.from_char('a5'))
+        board.put_figures([king, rook, bishop])
+
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 0,  "Rook must be unavailable when e1 is under pressure"
+
+        bishop.move(Position.from_char('b5'))
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when f1 is under pressure"
+
+        bishop.move(Position.from_char('c5'))
+        moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when g1 is under pressure"
+
+    def test_long_rook(self):
+        board = Board(EmptyPosition())
+        king = King(Player.BLACK, Position.from_char('e8'))
+        rook = Rook(Player.BLACK, Position.from_char('a8'))
+        board.put_figures([king, rook])
+
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 1, "Rook must be available"
+
+        # make and rollback move
+        board.make_move(next(iter(moves)))
+        assert board.get_figure(Position.from_char('d8')) == rook, 'After rook is invalid rook position'
+        assert board.get_figure(Position.from_char('c8')) == king, 'After rook is invalid king position'
+
+        board.rollback_move()
+        assert board.get_figure(Position.from_char('e8')) == king, 'Rollback after rook is invalid king position'
+        assert board.get_figure(Position.from_char('a8')) == rook, 'Rollback after rook is invalid rook position'
+
+    def test_long_rook_1(self):
+        board = Board(EmptyPosition())
+        king = King(Player.BLACK, Position.from_char('e8'))
+        rook = Rook(Player.BLACK, Position.from_char('f8'))
+        pawn = Pawn(Player.BLACK, Position.from_char('a8'))
+        board.put_figures([king, rook, pawn])
+
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when figures between"
+
+    def test_long_rook_2(self):
+        board = Board(EmptyPosition())
+        king = King(Player.BLACK, Position.from_char('e8'))
+        rook = Rook(Player.BLACK, Position.from_char('a8'))
+        board.put_figures([king, rook])
+
+        king.move(Position.from_char('e8'))
+        king.move(Position.from_char('e7'))
+
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when king has moved"
+
+    def test_long_rook_3(self):
+        board = Board(EmptyPosition())
+        king = King(Player.BLACK, Position.from_char('e7'))
+        rook = Rook(Player.BLACK, Position.from_char('e8'))
+        board.put_figures([king, rook])
+
+        rook.move(Position.from_char('a7'))
+        rook.move(Position.from_char('a8'))
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable  when rook is moved"
+
+    def test_long_rook_4(self):
+        board = Board(EmptyPosition())
+        king = King(Player.BLACK, Position.from_char('e8'))
+        rook = Rook(Player.BLACK, Position.from_char('a8'))
+        bishop = Bishop(Player.WHITE, Position.from_char('h5'))
+        board.put_figures([king, rook, bishop])
+
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 0,  "Rook must be unavailable when e1 is under pressure"
+
+        bishop.move(Position.from_char('g5'))
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when f1 is under pressure"
+
+        bishop.move(Position.from_char('f5'))
+        moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
+        assert len(moves) == 0, "Rook must be unavailable when g1 is under pressure"
 
 
 class TestBishop(object):

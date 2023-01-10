@@ -89,6 +89,8 @@ class Movement(object):
         return cls(from_pos=Position.from_char(pos[0]), to_pos=Position.from_char(pos[1]))
 
     def __str__(self):
+        if self.rook is not None:
+            return '0-0-0' if self.rook.position.x == 0 else '0-0'
         return "%s%s%s%s%s" % (
             '' if isinstance(self.figure, chemate.figure.Pawn) else self.figure.char.upper(),
             str(self.from_pos),
@@ -107,6 +109,6 @@ class StringPainter(Painter):
     def draw_board(self, board, **args):
         lines = [['.' for x in range(8)] for y in range(8)]
         for figure in board.figures():
-            lines[7-figure.position.y][figure.position.x] = figure.from_char
+            lines[7-figure.position.y][figure.position.x] = figure.char
 
         return "\n".join([" ".join(line) for line in lines])
