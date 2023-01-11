@@ -230,6 +230,16 @@ class TestKing(object):
         moves = [move for move in board.legal_moves(Player.WHITE, king) if move.rook is not None]
         assert len(moves) == 0, "Rook must be unavailable when g1 is under pressure"
 
+    def test_short_rook_5(self):
+        board = Board(EmptyPosition())
+        king = King(Player.WHITE, Position.from_char('e1'))
+        rook = Rook(Player.WHITE, Position.from_char('h1'))
+        pawn = Pawn(Player.BLACK, Position.from_char('e2'))
+        board.put_figures([king, rook, pawn])
+
+        moves = list(map(str, board.legal_moves(Player.WHITE, king)))
+        assert '0-0' not in moves,  "Rook must be unavailable when e2 is under pressure"
+
     def test_long_rook(self):
         board = Board(EmptyPosition())
         king = King(Player.BLACK, Position.from_char('e8'))
@@ -279,7 +289,7 @@ class TestKing(object):
         rook.move(Position.from_char('a7'))
         rook.move(Position.from_char('a8'))
         moves = [move for move in board.legal_moves(Player.BLACK, king) if move.rook is not None]
-        assert len(moves) == 0, "Rook must be unavailable  when rook is moved"
+        assert len(moves) == 0, "Rook must be unavailable when rook is moved"
 
     def test_long_rook_4(self):
         board = Board(EmptyPosition())
@@ -323,8 +333,4 @@ class TestRook(object):
         for movement in rook.available_moves(hash(board)):
             assert movement.to_pos != Position.from_char('a3')
             assert movement.to_pos != Position.from_char('a5')
-        pass
-
-    @pytest.mark.skip
-    def test_rook(self):
         pass

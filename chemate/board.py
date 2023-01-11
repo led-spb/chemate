@@ -199,7 +199,7 @@ class Board(object):
                 yield figure
         pass
 
-    def all_moves(self, color=None, taken_only=False) -> Iterator[Movement]:
+    def all_moves(self, color=None, taken_only=False, attack_only=False) -> Iterator[Movement]:
         """
         Return list of available moves without
         :param color: only for figures of specified color
@@ -210,7 +210,7 @@ class Board(object):
         for figure in self.board:
             if figure is None or (color is not None and figure.color != color):
                 continue
-            for move in figure.available_moves(board_hash):
+            for move in figure.available_moves(board_hash, attack_only):
                 taken = self.board[move.to_pos.index]
                 if taken is not None or not taken_only:
                     move.taken_figure = taken

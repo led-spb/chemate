@@ -42,14 +42,14 @@ class Figure(object):
         """
         return self.__class__(self.color, self.position)
 
-    def available_moves(self, hash) -> List[Movement]:
-        if hash in self._cache:
+    def available_moves(self, hash, attack_only=False) -> List[Movement]:
+        if False and hash in self._cache:
             return self._cache[hash]
-        moves = list(self.calculate_move())
+        moves = list(self.calculate_move(attack_only))
         self._cache[hash] = moves
         return moves
 
-    def calculate_move(self) -> Iterator[Movement]:
+    def calculate_move(self, attack_only=False) -> Iterator[Movement]:
         """
         Get available moves for current figure position
         :return: Iterator for chemate.utils.Position object with valid positions of this figure
@@ -87,18 +87,19 @@ class Pawn(Figure):
     def _gen_replace_figures(self):
         return [Queen(self.color, None), Rook(self.color, None), Knight(self.color, None), Bishop(self.color, None)]
 
-    def calculate_move(self):
+    def calculate_move(self, attack_only=False):
         # Pawn can move 1 (or 2 on first move) on forward
         direction = Direction.UP if self.color == Player.WHITE else Direction.DOWN
         limit = 2 if self.position.y == (1 if self.color == Player.WHITE else 6) else 1
 
-        for new_pos in self.board.gen_positions_by_dir(self.position, direction, color=None, limit=limit):
-            # Transformation on last line
-            if new_pos.is_last_line_for(self.color):
-                for new_figure in self._gen_replace_figures():
-                    yield Movement(self, self.position, new_pos, transform_to=new_figure)
-            else:
-                yield Movement(self, self.position, new_pos)
+        if not attack_only:
+            for new_pos in self.board.gen_positions_by_dir(self.position, direction, color=None, limit=limit):
+                # Transformation on last line
+                if new_pos.is_last_line_for(self.color):
+                    for new_figure in self._gen_replace_figures():
+                        yield Movement(self, self.position, new_pos, transform_to=new_figure)
+                else:
+                    yield Movement(self, self.position, new_pos)
 
         # Pawn can fight only 1 on forward diagonal
         all_pos = list(
@@ -115,9 +116,9 @@ class Pawn(Figure):
         )
 
         for new_pos in all_pos:
-            if self.board.get_figure(new_pos) is None:
+            if not attack_only and self.board.get_figure(new_pos) is None:
                 continue
-            if new_pos.is_last_line_for(self.color):
+            if not attack_only and new_pos.is_last_line_for(self.color):
                 for new_figure in self._gen_replace_figures():
                     yield Movement(self, self.position, new_pos, transform_to=new_figure)
             else:
@@ -134,7 +135,7 @@ class Knight(Figure):
         super().__init__(color, position)
         self._price = 3
 
-    def calculate_move(self):
+    def calculate_move(self, attack_only=False):
         all_positions = [
             (self.position.x+1, self.position.y+2),
             (self.position.x+2, self.position.y+1),
@@ -164,7 +165,7 @@ class Bishop(Figure):
         super().__init__(color, position)
         self._price = 3
 
-    def calculate_move(self):
+    def calculate_move(self, attack_only=False):
         for new_pos in itertools.chain(
                self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, self.color),
                self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, self.color),
@@ -182,7 +183,7 @@ class Rook(Figure):
         super().__init__(color, position)
         self._price = 5
 
-    def calculate_move(self):
+    def calculate_move(self, attack_only=False):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP, self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.RIGHT, self.color),
@@ -200,7 +201,7 @@ class Queen(Figure):
         super().__init__(color, position)
         self._price = 9
 
-    def calculate_move(self):
+    def calculate_move(self, attack_only=False):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, color=self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, color=self.color),
@@ -223,10 +224,10 @@ class King(Figure):
         self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
         self._price = 90
 
-    def available_moves(self, hash) -> List[Movement]:
+    def available_moves(self, hash, attack_only=False) -> List[Movement]:
         return list(self.calculate_move())
 
-    def calculate_move(self):
+    def calculate_move(self, attack_only=False):
         for new_pos in itertools.chain(
                 self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, limit=1, color=self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, limit=1, color=self.color),
@@ -237,6 +238,8 @@ class King(Figure):
                 self.board.gen_positions_by_dir(self.position, Direction.DOWN, limit=1, color=self.color),
                 self.board.gen_positions_by_dir(self.position, Direction.LEFT, limit=1, color=self.color)):
             yield Movement(self, self.position, new_pos)
+        if attack_only:
+            return
 
         # Unable to rook when king already moved or has check
         if self.position != self.home_position or self.board.has_moved(self):
@@ -263,7 +266,7 @@ class King(Figure):
             return
 
         # Unable to make rook then cells under pressure
-        opposite_moves = list(self.board.all_moves(self.color*-1))
+        opposite_moves = list(self.board.all_moves(self.color * -1, attack_only=True))
         for i in range(0, -3 if long else 3, -1 if long else 1):
             check_pos = Position(self.position.index + i)
             for move in opposite_moves:
