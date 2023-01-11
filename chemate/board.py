@@ -199,7 +199,7 @@ class Board(object):
         """
         list(map(self.put_figure, it))
 
-    def figures(self):
+    def figures(self) -> Iterator[Figure]:
         """
         Get all figures on the board
         :return: Iterator object with all figures

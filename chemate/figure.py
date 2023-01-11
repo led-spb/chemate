@@ -20,7 +20,7 @@ class Figure(object):
         return '.'
 
     def __str__(self):
-        return self.char + self.position
+        return self.char + str(self.position)
 
     @property
     def unicode_char(self):
