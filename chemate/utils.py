@@ -69,12 +69,19 @@ class Player(object):
 
 
 class Movement(object):
-    __slots__ = ["figure", "from_pos", "to_pos", "taken_figure", "rook", "transform_to", "is_check"]
+    __slots__ = ["figure", "from_pos", "to_pos", "taken_figure", "rook", "transform_to", "is_check", "is_passthrough"]
 
     """
     This class describes one movement on board
     """
-    def __init__(self, figure=None, from_pos=None, to_pos=None, taken_figure=None, rook=None, transform_to=None) -> None:
+    def __init__(self,
+                 figure=None,
+                 from_pos=None,
+                 to_pos=None,
+                 taken_figure=None,
+                 rook=None,
+                 transform_to=None,
+                 is_passthrough=False) -> None:
         self.rook = rook
         self.to_pos = to_pos
         self.from_pos = from_pos
@@ -82,6 +89,7 @@ class Movement(object):
         self.transform_to = transform_to
         self.taken_figure = taken_figure
         self.is_check = False
+        self.is_passthrough = is_passthrough
 
     @classmethod
     def from_char(cls, data):

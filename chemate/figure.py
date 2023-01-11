@@ -20,7 +20,7 @@ class Figure(object):
         return '.'
 
     def __str__(self):
-        return self.char+self.position
+        return self.char + self.position
 
     @property
     def unicode_char(self):
@@ -117,6 +117,15 @@ class Pawn(Figure):
 
         for new_pos in all_pos:
             if not attack_only and self.board.get_figure(new_pos) is None:
+                # take on passthrough
+                op_pawn_pos = new_pos + (Direction.DOWN if self.color == Player.WHITE else Direction.UP)
+                op_pawn = self.board.get_figure(op_pawn_pos)
+                if op_pawn is not None and isinstance(op_pawn, Pawn) \
+                        and op_pawn.color == self.color * - 1:
+                    last_move = self.board.last_move
+                    initial_pos = new_pos + (Direction.UP if self.color == Player.WHITE else Direction.DOWN)
+                    if last_move is not None and last_move.figure == op_pawn and last_move.from_pos == initial_pos:
+                        yield Movement(self, self.position, new_pos, taken_figure=op_pawn, is_passthrough=True)
                 continue
             if not attack_only and new_pos.is_last_line_for(self.color):
                 for new_figure in self._gen_replace_figures():
@@ -137,14 +146,14 @@ class Knight(Figure):
 
     def calculate_move(self, attack_only=False):
         all_positions = [
-            (self.position.x+1, self.position.y+2),
-            (self.position.x+2, self.position.y+1),
-            (self.position.x+2, self.position.y-1),
-            (self.position.x+1, self.position.y-2),
-            (self.position.x-1, self.position.y-2),
-            (self.position.x-2, self.position.y-1),
-            (self.position.x-2, self.position.y+1),
-            (self.position.x-1, self.position.y+2)
+            (self.position.x + 1, self.position.y + 2),
+            (self.position.x + 2, self.position.y + 1),
+            (self.position.x + 2, self.position.y - 1),
+            (self.position.x + 1, self.position.y - 2),
+            (self.position.x - 1, self.position.y - 2),
+            (self.position.x - 2, self.position.y - 1),
+            (self.position.x - 2, self.position.y + 1),
+            (self.position.x - 1, self.position.y + 2)
         ]
         for x, y in all_positions:
             if x < 0 or x > 7 or y < 0 or y > 7:
@@ -167,10 +176,10 @@ class Bishop(Figure):
 
     def calculate_move(self, attack_only=False):
         for new_pos in itertools.chain(
-               self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, self.color),
-               self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, self.color),
-               self.board.gen_positions_by_dir(self.position, Direction.DOWN_LEFT, self.color),
-               self.board.gen_positions_by_dir(self.position, Direction.DOWN_RIGHT, self.color)):
+                self.board.gen_positions_by_dir(self.position, Direction.UP_LEFT, self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.UP_RIGHT, self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN_LEFT, self.color),
+                self.board.gen_positions_by_dir(self.position, Direction.DOWN_RIGHT, self.color)):
             yield Movement(self, self.position, new_pos)
 
     @Figure.char.getter
@@ -225,7 +234,7 @@ class King(Figure):
         self._price = 90
 
     def available_moves(self, hash, attack_only=False) -> List[Movement]:
-        return list(self.calculate_move())
+        return list(self.calculate_move(attack_only))
 
     def calculate_move(self, attack_only=False):
         for new_pos in itertools.chain(

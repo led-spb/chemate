@@ -78,7 +78,7 @@ class Board(object):
                 return
         pass
 
-    def put_figure(self, figure):
+    def put_figure(self, figure: Figure):
         """
         Put a figure on the board
         :return: None
@@ -88,7 +88,7 @@ class Board(object):
         self.balance += figure.price
         pass
 
-    def get_figure(self, position) -> Figure:
+    def get_figure(self, position: Position) -> Figure:
         """
         Get figure at specified location on board
         :param position: Position on board
@@ -102,7 +102,7 @@ class Board(object):
                 yield figure
         pass
 
-    def make_move(self, move):
+    def make_move(self, move: Movement):
         """
         Move figure to the new location
         :type move: Movement
@@ -132,11 +132,15 @@ class Board(object):
             self.board[new_rook_pos.index] = rook
             rook.position = new_rook_pos
 
+        # take on passthrough
+        if move.is_passthrough:
+            self.board[move.taken_figure.position.index] = None
+
         hash_board = hash(self)
 
         # Set check flag for movement
         move.is_check = False
-        for new_move in figure.available_moves(hash_board):
+        for new_move in figure.available_moves(hash_board, attack_only=True):
             if isinstance(new_move.taken_figure, King):
                 move.is_check = True
                 break
@@ -181,6 +185,12 @@ class Board(object):
             self.check_status = False
         return last_move
 
+    @property
+    def last_move(self):
+        if len(self.moves) > 0:
+            return self.moves[-1]
+        return None
+
     def put_figures(self, it):
         """
         Put all figures on the board from iterator
@@ -199,22 +209,23 @@ class Board(object):
                 yield figure
         pass
 
-    def all_moves(self, color=None, taken_only=False, attack_only=False) -> Iterator[Movement]:
+    def all_moves(self, color=None, attack_only=False, figure=None) -> Iterator[Movement]:
         """
         Return list of available moves without
         :param color: only for figures of specified color
-        :param taken_only: only move when have take another figure
+        :param attack_only: only move when have attack
+        :param figure: only legal moves for figure
         :return: Iterator object
         """
         board_hash = hash(self)
-        for figure in self.board:
-            if figure is None or (color is not None and figure.color != color):
+        for fig in self.board:
+            if fig is None or (figure is not None and figure != fig) or (color is not None and fig.color != color):
                 continue
-            for move in figure.available_moves(board_hash, attack_only):
-                taken = self.board[move.to_pos.index]
-                if taken is not None or not taken_only:
+            for move in fig.available_moves(board_hash, attack_only):
+                if not move.is_passthrough:
+                    taken = self.board[move.to_pos.index]
                     move.taken_figure = taken
-                    yield move
+                yield move
         pass
 
     def legal_moves(self, color, figure=None) -> List[Movement]:
@@ -225,9 +236,7 @@ class Board(object):
         :return: list of Movement object
         """
         legal_moves = []
-        for move in self.all_moves(color):
-            if figure is not None and move.figure != figure:
-                continue
+        for move in self.all_moves(color=color, figure=figure):
             # Try to make move and when check position
             self.make_move(move)
             if not self.test_for_check(color):
@@ -242,8 +251,8 @@ class Board(object):
         :return:
         """
         # todo: проверять не все ходы соперника, а только тех фигур, кто на расстоянии атаки на нас
-        for opposite_move in self.all_moves(color=-color, taken_only=True):
-            if isinstance(opposite_move.taken_figure, King):
+        for opposite_move in self.all_moves(color=-color, attack_only=True):
+            if opposite_move.taken_figure is not None and isinstance(opposite_move.taken_figure, King):
                 return True
         return False
 
