@@ -1,7 +1,7 @@
-from typing import Iterator, List
+from typing import Iterator, List, Union
 
 from chemate.figure import King, Figure
-from chemate.utils import Movement, Position, Direction, Player
+from chemate.utils import Movement, Position, Direction
 
 
 class Board(object):
@@ -22,6 +22,18 @@ class Board(object):
         lst = ['.' if x is None else x.char for x in self.board]
         s = ''.join(lst)
         return s.__hash__()
+
+    def __getstate__(self):
+        return {'board': self.board, 'moves': self.moves, 'check_status': self.check_status}
+
+    def __setstate__(self, state):
+        self.balance = 0
+        self.board = state['board']
+        self.moves = state['moves']
+        self.check_status = state['check_status']
+        self.positions = []
+        self.cache_positions()
+        self.put_figures(self.figures())
 
     def clear(self):
         """
@@ -45,7 +57,7 @@ class Board(object):
         self.positions = [None for x in range(64)]
         cache = [Position(index) for index in range(64)]
         for pos in cache:
-            variants = {}
+            variants = dict()
             variants[Direction.UP] = [cache[pos.index + Direction.UP*i] for i in range(1, 8-pos.y)]
             variants[Direction.DOWN] = [cache[pos.index + Direction.DOWN*i] for i in range(1, pos.y+1)]
             variants[Direction.RIGHT] = [cache[pos.index + Direction.RIGHT*i] for i in range(1, 8-pos.x)]
@@ -186,7 +198,7 @@ class Board(object):
         return last_move
 
     @property
-    def last_move(self):
+    def last_move(self) -> Union[Movement, None]:
         if len(self.moves) > 0:
             return self.moves[-1]
         return None

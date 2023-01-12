@@ -1,6 +1,7 @@
-from chemate.figure import Bishop
+from chemate.board import Board
+from chemate.figure import Bishop, Queen
 from chemate.positions import EmptyPosition, PredefinedFENPosition
-from chemate.utils import Player
+from chemate.utils import Player, StringPainter, Position
 
 
 class TestEmptyPositions:
@@ -20,3 +21,15 @@ class TestFENPosition:
 
         factory = PredefinedFENPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
         assert len(list(factory.figures())) == 32
+
+
+class TestMate:
+    def test_mate_1(self):
+        board = Board(PredefinedFENPosition('r1bqkbnr/pppp1ppp/8/4p2Q/2B1P3/2K5/PP1P1PPP/n1BK2NR'))
+        printer = StringPainter()
+
+        queen = board.get_figure(Position.from_char('h5'))
+        assert isinstance(queen, Queen)
+        assert queen.color == Player.WHITE
+        moves = board.legal_moves(Player.WHITE, queen)
+        assert 'Qh5xf7' in list(map(str, moves))

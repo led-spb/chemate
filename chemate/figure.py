@@ -15,6 +15,16 @@ class Figure(object):
         self._price = 1
         self._cache = {}
 
+    def __getstate__(self):
+        return {'color': self.color, 'position': self.position, 'price': self._price}
+
+    def __setstate__(self, state):
+        self.board = None
+        self._cache = {}
+        self._price = state['price']
+        self.color = state['color']
+        self.position = state['position']
+
     @property
     def char(self):
         return '.'
@@ -232,6 +242,10 @@ class King(Figure):
         super().__init__(color, position)
         self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
         self._price = 90
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
 
     def available_moves(self, hash, attack_only=False) -> List[Movement]:
         return list(self.calculate_move(attack_only))

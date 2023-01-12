@@ -5,7 +5,7 @@ class Position(object):
     """
     This class describes figure position at board
     """
-    _slots = ['index']
+    __slots__ = ['index']
 
     def __init__(self, index):
         self.index = index
@@ -23,6 +23,10 @@ class Position(object):
 
     def is_last_line_for(self, color):
         return (self.y == 7 and color == Player.WHITE) or (self.y == 0 and color == Player.BLACK)
+
+    @property
+    def color(self):
+        return Player.WHITE if (self.index + self.y % 2) % 2 else Player.BLACK
 
     @property
     def x(self):
@@ -82,10 +86,10 @@ class Movement(object):
                  rook=None,
                  transform_to=None,
                  is_passthrough=False) -> None:
-        self.rook = rook
-        self.to_pos = to_pos
-        self.from_pos = from_pos
         self.figure = figure
+        self.from_pos = from_pos
+        self.to_pos = to_pos
+        self.rook = rook
         self.transform_to = transform_to
         self.taken_figure = taken_figure
         self.is_check = False
