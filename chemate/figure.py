@@ -8,26 +8,32 @@ import itertools
 class Figure(object):
     _char_maps = dict(zip("KQRBNPkqrbnp", (chr(uc) for uc in range(0x2654, 0x2660))))
 
-    def __init__(self, color, position):
+    def __init__(self, color: int, position: Position) -> None:
         self.color = color
         self.board = None
         self.position = position
+        self.moves = 0
         self._price = 1
         self._cache = {}
 
     def __getstate__(self):
-        return {'color': self.color, 'position': self.position, 'price': self._price}
+        return {'color': self.color, 'position': self.position, 'price': self._price, 'moves': self.moves}
 
     def __setstate__(self, state):
         self.board = None
         self._cache = {}
         self._price = state['price']
         self.color = state['color']
+        self.moves = state['moves']
         self.position = state['position']
 
     @property
     def char(self):
         return '.'
+
+    @property
+    def is_moved(self) -> bool:
+        return self.moves > 0
 
     def __str__(self):
         return self.char + str(self.position)
@@ -37,7 +43,7 @@ class Figure(object):
         return Figure._char_maps[self.char]
 
     @property
-    def price(self):
+    def price(self) -> int:
         return self._price * self.color
 
     def __eq__(self, other):
@@ -59,19 +65,19 @@ class Figure(object):
         self._cache[hash] = moves
         return moves
 
-    def calculate_move(self, attack_only=False) -> Iterator[Movement]:
+    def calculate_move(self, attack_only: bool = False) -> Iterator[Movement]:
         """
         Get available moves for current figure position
         :return: Iterator for chemate.utils.Position object with valid positions of this figure
         """
         pass
 
-    def move(self, new_position):
+    def move(self, new_position: Position) -> Movement:
         """
         Moving figure to the new position
         :param new_position: Position
         """
-        self.board.make_move(Movement(from_pos=self.position, to_pos=new_position))
+        return self.board.make_move(Movement(from_pos=self.position, to_pos=new_position))
 
 
 class FigureCreator:
@@ -94,10 +100,10 @@ class FigureCreator:
 
 
 class Pawn(Figure):
-    def _gen_replace_figures(self):
-        return [Queen(self.color, None), Rook(self.color, None), Knight(self.color, None), Bishop(self.color, None)]
+    def _gen_replace_figures(self, pos: Position):
+        return [Queen(self.color, pos), Rook(self.color, pos), Knight(self.color, pos), Bishop(self.color, pos)]
 
-    def calculate_move(self, attack_only=False):
+    def calculate_move(self, attack_only=False) -> Iterator[Movement]:
         # Pawn can move 1 (or 2 on first move) on forward
         direction = Direction.UP if self.color == Player.WHITE else Direction.DOWN
         limit = 2 if self.position.y == (1 if self.color == Player.WHITE else 6) else 1
@@ -106,7 +112,7 @@ class Pawn(Figure):
             for new_pos in self.board.gen_positions_by_dir(self.position, direction, color=None, limit=limit):
                 # Transformation on last line
                 if new_pos.is_last_line_for(self.color):
-                    for new_figure in self._gen_replace_figures():
+                    for new_figure in self._gen_replace_figures(new_pos):
                         yield Movement(self, self.position, new_pos, transform_to=new_figure)
                 else:
                     yield Movement(self, self.position, new_pos)
@@ -137,8 +143,9 @@ class Pawn(Figure):
                     if last_move is not None and last_move.figure == op_pawn and last_move.from_pos == initial_pos:
                         yield Movement(self, self.position, new_pos, taken_figure=op_pawn, is_passthrough=True)
                 continue
+            # regular attack
             if not attack_only and new_pos.is_last_line_for(self.color):
-                for new_figure in self._gen_replace_figures():
+                for new_figure in self._gen_replace_figures(new_pos):
                     yield Movement(self, self.position, new_pos, transform_to=new_figure)
             else:
                 yield Movement(self, self.position, new_pos)
@@ -240,12 +247,11 @@ class Queen(Figure):
 class King(Figure):
     def __init__(self, color, position):
         super().__init__(color, position)
-        self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
         self._price = 90
 
-    def __setstate__(self, state):
-        super().__setstate__(state)
-        self.home_position = Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
+    @property
+    def home_position(self):
+        return Position.from_char('e1') if self.color == Player.WHITE else Position.from_char('e8')
 
     def available_moves(self, hash, attack_only=False) -> List[Movement]:
         return list(self.calculate_move(attack_only))
@@ -265,7 +271,7 @@ class King(Figure):
             return
 
         # Unable to rook when king already moved or has check
-        if self.position != self.home_position or self.board.has_moved(self):
+        if self.is_moved or self.position != self.home_position:
             return
 
         yield from self.rook_moves(False)
@@ -285,7 +291,7 @@ class King(Figure):
 
         rook = self.board.get_figure(Position.from_xy(0 if long else 7, self.position.y))
         # Unable to rook when rook already moved
-        if rook is None or not isinstance(rook, Rook) or rook.color != self.color or self.board.has_moved(rook):
+        if rook is None or not isinstance(rook, Rook) or rook.color != self.color or rook.is_moved:
             return
 
         # Unable to make rook then cells under pressure

@@ -30,6 +30,15 @@ class Board(object):
         self.balance = 0
         self.board = state['board']
         self.moves = state['moves']
+        for move in self.moves:
+            if move.taken_figure is not None:
+                move.taken_figure.board = self
+            if move.figure is not None:
+                move.figure.board = self
+            if move.transform_to is not None:
+                move.transform_to.board = self
+            if move.rook is not None:
+                move.rook.board = self
         self.check_status = state['check_status']
         self.positions = []
         self.cache_positions()
@@ -114,7 +123,7 @@ class Board(object):
                 yield figure
         pass
 
-    def make_move(self, move: Movement):
+    def make_move(self, move: Movement) -> Movement:
         """
         Move figure to the new location
         :type move: Movement
@@ -128,8 +137,10 @@ class Board(object):
             self.balance -= move.taken_figure.price
         if move.transform_to is not None:
             self.balance += move.transform_to.price
+            self.balance -= move.figure.price
 
         figure = move.transform_to or move.figure
+        figure.moves += 1
         self.board[move.from_pos.index] = None
         self.board[move.to_pos.index] = figure
         figure.position = move.to_pos
@@ -137,15 +148,20 @@ class Board(object):
 
         # make rook movement
         if move.rook is not None:
+            # hack for restore move from pickle
+            move.rook = self.get_figure(move.rook.position)
             rook = move.rook
             long = rook.position.x - move.from_pos.x < 0
             new_rook_pos = Position.from_xy(3 if long else 5, rook.position.y)
             self.board[rook.position.index] = None
             self.board[new_rook_pos.index] = rook
             rook.position = new_rook_pos
+            rook.moves += 1
 
         # take on passthrough
         if move.is_passthrough:
+            # hack for restore move from pickle
+            move.taken_figure = self.get_figure(move.taken_figure.position)
             self.board[move.taken_figure.position.index] = None
 
         hash_board = hash(self)
@@ -160,7 +176,7 @@ class Board(object):
 
         # Save movement in stack
         self.moves.append(move)
-        pass
+        return move
 
     def rollback_move(self):
         """
@@ -174,6 +190,7 @@ class Board(object):
         self.board[last_move.from_pos.index] = last_move.figure
         self.board[last_move.to_pos.index] = last_move.taken_figure or None
         last_move.figure.position = last_move.from_pos
+        last_move.figure.moves -= 1
 
         # Restore rook position
         if last_move.rook is not None:
@@ -183,12 +200,14 @@ class Board(object):
             self.board[rook.position.index] = None
             self.board[new_rook_pos.index] = rook
             rook.position = new_rook_pos
+            rook.moves -= 1
 
         # Restore balance
         if last_move.taken_figure is not None:
             self.balance += last_move.taken_figure.price
         if last_move.transform_to is not None:
             self.balance -= last_move.transform_to.price
+            self.balance -= last_move.figure.price
 
         # Restore check status
         if len(self.moves) > 0:

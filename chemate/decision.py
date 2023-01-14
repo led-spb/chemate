@@ -1,4 +1,5 @@
-from chemate.utils import Position, Player
+from chemate.board import Board
+from chemate.utils import Position, Player, Movement
 import random
 
 
@@ -6,7 +7,7 @@ class DecisionTree(object):
     """
     This class realize decision tree algorithm
     """
-    def __init__(self, board, max_level):
+    def __init__(self, board: Board, max_level: int) -> None:
         self.board = board
         self.best_moves = None
         self.max_level = max_level
@@ -17,7 +18,7 @@ class DecisionTree(object):
         self._estimates = {}
         pass
 
-    def best_move(self, color, depth=None):
+    def best_move(self, color: int, depth: int = None) -> tuple[Movement, float]:
         """
         Select best move for player
         :param color: color of figures
@@ -42,7 +43,7 @@ class DecisionTree(object):
 
         return best_move, best_score
 
-    def mini_max(self, color, depth, alpha, beta):
+    def mini_max(self, color, depth, alpha, beta) -> float:
         """
         Main method for computer chess
         Make the best mevement for current
@@ -81,10 +82,10 @@ class DecisionTree(object):
 
         return best_score
 
-    def estimate(self):
+    def estimate(self) -> float:
         """
         Estimate current position for self.color figures
-        :return:
+        :return: float
         """
         h = hash(self.board)
         if h in self._estimates:
@@ -100,6 +101,11 @@ class DecisionTree(object):
                 fig = self.board.get_figure(pos)
                 if fig is not None:
                     position_estimate += fig.price*0.5
+
+        # Rook movement is preferred
+        for move in self.board.moves:
+            if move.rook is not None:
+                position_estimate += 2*move.rook.color
 
         estimate = quality_estimate + position_estimate + (random.random()-0.5)
         self._estimates[h] = estimate

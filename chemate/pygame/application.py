@@ -2,12 +2,13 @@ import importlib.resources
 import queue
 
 import pygame as pg
+import pygame_gui as gui
 
-from .board import BoardCanvas, CellItem
+from .board import BoardCanvas
 from ..board import Board
 from ..decision import DecisionTree
 from ..positions import InitialPosition
-from ..utils import Player, Position, Movement
+from ..utils import Player, Movement
 from multiprocessing import Process, Queue
 
 
@@ -15,10 +16,10 @@ def decision_process(queue: Queue, result: Queue, color: int):
     print('decision process started')
     while True:
         board = queue.get()
-        decision = DecisionTree(board, 2)
+        decision = DecisionTree(board, 3)
         move, score = decision.best_move(color)
         result.put(move)
-    return
+    pass
 
 
 class Application:
@@ -28,8 +29,6 @@ class Application:
         self.cell_border = 2
         self.FPS = 15
         self.outer_border = 15
-        self.WIDTH = self.cell_size * 8 + self.outer_border * 2 + self.cell_border
-        self.HEIGHT = self.cell_size * 8 + self.outer_border * 2 + self.cell_border
         self.running = False
         self.clock = pg.time.Clock()
         self.screen = None
@@ -48,18 +47,13 @@ class Application:
         )
 
         # Make board canvas
-        BoardCanvas(self.outer_border, self.outer_border, self.cell_size, self.cell_border, self.static)
-
-        # Create board cells
-        self.cells = pg.sprite.Group()
-        for pos in [Position(i) for i in range(64)]:
-            cell = CellItem(figure_font,
-                            self.outer_border+self.cell_border//2 + pos.x*self.cell_size+self.cell_border//2,
-                            self.outer_border+self.cell_border//2 + (7 - pos.y)*self.cell_size+self.cell_border//2,
-                            self.cell_size-self.cell_border,
-                            pos, self.board)
-            self.cells.add(cell)
-        self.static.add(self.cells)
+        self.board_canvas = BoardCanvas(
+            board=self.board,
+            font=figure_font,
+            pos=(self.outer_border, self.outer_border),
+            cell_size=self.cell_size
+        )
+        self.static.add(self.board_canvas)
 
         self.task_queue = Queue()
         self.result_queue = Queue()
@@ -69,6 +63,23 @@ class Application:
                     'queue': self.task_queue,
                     'result': self.result_queue}
         )
+
+        self.WIDTH = self.outer_border * 2 + self.board_canvas.rect.width
+        self.HEIGHT = self.outer_border * 2 + self.board_canvas.rect.height
+        self.gui_manager = gui.UIManager((self.WIDTH, self.HEIGHT))
+        # self.make_gui()
+        pass
+
+    def make_gui(self):
+        welcome_wnd = gui.elements.UIWindow(
+            rect=pg.Rect((0, 0), (self.WIDTH, self.HEIGHT)), resizable=True, draggable=True,
+            window_display_title="Welcome",
+            manager=self.gui_manager
+        )
+        text_output_box = gui.elements.UITextBox(
+            relative_rect=pg.Rect((0, 0), welcome_wnd.get_container().get_size()),
+            html_text="<b>Welcome to Chess game!</b>",
+            container=welcome_wnd)
         pass
 
     def start_comp_move(self):
@@ -94,7 +105,7 @@ class Application:
         if self.current_player != self.human_player:
             self.start_comp_move()
         # clear highlight
-        for cell in self.cells.sprites():
+        for cell in self.board_canvas.cells:
             cell.highlighted = False
         pass
 
@@ -102,20 +113,16 @@ class Application:
         if self.current_player != self.human_player:
             return
 
-        position = None
-        for cell in self.cells.sprites():
-            if cell.rect.collidepoint(pos):
-                position = cell.position
-                break
-        if position is None:
+        cell = self.board_canvas.find_cell(pos)
+        if cell is None:
             return
-
+        position = cell.position
         figure = self.board.get_figure(position)
         if figure is not None and figure.color == self.current_player:
             self.selected_figure = figure
             self.valid_moves = self.board.legal_moves(self.current_player, figure)
             highlighted = [move.to_pos for move in self.valid_moves] + [self.selected_figure.position]
-            for cell in self.cells.sprites():
+            for cell in self.board_canvas.cells:
                 cell.highlighted = cell.position in highlighted
             return
 
@@ -126,15 +133,25 @@ class Application:
                     return
         pass
 
+    def rollback_move(self):
+        if self.current_player != self.human_player:
+            return
+        self.board.rollback_move()
+        self.board.rollback_move()
+        for cell in self.board_canvas.cells:
+            cell.highlighted = False
+        pass
+
     def run(self):
         self.ai_process.start()
         try:
-            self.screen = pg.display.set_mode([self.WIDTH, self.HEIGHT])
+            self.screen = pg.display.set_mode((self.WIDTH, self.HEIGHT))
             self.running = True
 
+            timedelta = 0
             while self.running:
                 self.static.update()
-                self.screen.fill((220, 220, 220))
+                self.screen.fill((0, 0, 0))
                 self.static.draw(self.screen)
                 self.process_comp_move()
 
@@ -143,9 +160,16 @@ class Application:
                         self.running = False
                     if event.type == pg.MOUSEBUTTONUP:
                         self.on_click(event.pos)
+                    if event.type == pg.KEYDOWN:
+                        if event.key == 122 and event.mod & pg.KMOD_CTRL:
+                            self.rollback_move()
+                    self.gui_manager.process_events(event)
+
+                self.gui_manager.update(timedelta/1000.0)
+                self.gui_manager.draw_ui(self.screen)
 
                 pg.display.flip()
-                self.clock.tick(self.FPS)
+                timedelta = self.clock.tick(self.FPS)
         finally:
             self.ai_process.kill()
         pass
