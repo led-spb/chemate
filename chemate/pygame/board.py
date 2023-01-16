@@ -3,7 +3,7 @@ from typing import Union
 import pygame as pg
 
 from chemate.board import Board
-from chemate.utils import Position, Player
+from chemate.core import Position, Player
 
 
 class BoardSprite(pg.sprite.Sprite):
@@ -46,7 +46,7 @@ class CellItem(pg.sprite.Sprite):
 
     def update(self) -> None:
         pg.draw.rect(self.image, self.color, pg.Rect((0, 0), self.image.get_size()))
-        figure = self.board.get_figure(self.position)
+        figure = self.board.figure_at(self.position)
         if figure is not None:
             img = self.font.render(figure.unicode_char, True, (0, 0, 0))
             self.image.blit(img, (0, 0))

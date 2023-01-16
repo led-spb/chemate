@@ -1,21 +1,21 @@
 from chemate.board import Board
-from chemate.utils import Position, Player, Movement
+from chemate.core import Position, Player, Movement
 import random
 
 
 class DecisionTree(object):
+    _central = [Position.from_char('d4'),
+                Position.from_char('e4'),
+                Position.from_char('d5'),
+                Position.from_char('e5')]
+
     """
     This class realize decision tree algorithm
     """
     def __init__(self, board: Board, max_level: int) -> None:
         self.board = board
-        self.best_moves = None
         self.max_level = max_level
-        self._central = [Position.from_char('d4'),
-                         Position.from_char('e4'),
-                         Position.from_char('d5'),
-                         Position.from_char('e5')]
-        self._estimates = {}
+        # self._estimates = {}
         pass
 
     def best_move(self, color: int, depth: int = None) -> tuple[Movement, float]:
@@ -29,8 +29,8 @@ class DecisionTree(object):
         best_move = None
         best_score = -9999 if color == Player.WHITE else 9999
 
-        for move in self.board.legal_moves(color):
-            self.board.make_move(move)
+        for move in list(self.board.valid_moves(color)):
+            self.board.move(move)
             try:
                 score = self.mini_max(-color, depth-1, -10000, 10000)
 
@@ -39,14 +39,14 @@ class DecisionTree(object):
                     best_move = move
                     best_score = score
             finally:
-                self.board.rollback_move()
+                self.board.rollback()
 
         return best_move, best_score
 
     def mini_max(self, color, depth, alpha, beta) -> float:
         """
         Main method for computer chess
-        Make the best mevement for current
+        Make the best movement for current
         :return: Estimated position cost
         """
         # At leaf return estimate
@@ -56,13 +56,13 @@ class DecisionTree(object):
         best_score = -9999 if color == Player.WHITE else 9999
 
         # Generate all available movements in current position
-        for move in self.board.legal_moves(color):
+        for move in self.board.valid_moves(color):
             # Move own figure
-            self.board.make_move(move)
+            self.board.move(move)
             # Make opponent's move and check the position estimate
             score = self.mini_max(-color, depth-1, alpha, beta)
             # Rollback own movement
-            self.board.rollback_move()
+            self.board.rollback()
 
             if color == Player.WHITE:
                 # We need select a move with max estimate
@@ -79,7 +79,6 @@ class DecisionTree(object):
 
             if beta <= alpha:
                 return best_score
-
         return best_score
 
     def estimate(self) -> float:
@@ -87,10 +86,6 @@ class DecisionTree(object):
         Estimate current position for self.color figures
         :return: float
         """
-        h = hash(self.board)
-        if h in self._estimates:
-            return self._estimates[h]
-
         # Estimate quality position
         quality_estimate = self.board.balance
         position_estimate = 0
@@ -98,7 +93,7 @@ class DecisionTree(object):
 
         if quality_estimate == 0:
             for pos in self._central:
-                fig = self.board.get_figure(pos)
+                fig = self.board.figure_at(pos)
                 if fig is not None:
                     position_estimate += fig.price*0.5
 
@@ -108,5 +103,4 @@ class DecisionTree(object):
                 position_estimate += 2*move.rook.color
 
         estimate = quality_estimate + position_estimate + (random.random()-0.5)
-        self._estimates[h] = estimate
         return estimate

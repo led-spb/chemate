@@ -8,7 +8,7 @@ from .board import BoardCanvas
 from ..board import Board
 from ..decision import DecisionTree
 from ..positions import InitialPosition
-from ..utils import Player, Movement
+from ..core import Player, Movement
 from multiprocessing import Process, Queue
 
 
@@ -33,7 +33,8 @@ class Application:
         self.clock = pg.time.Clock()
         self.screen = None
         self.static = pg.sprite.Group()
-        self.board = Board(InitialPosition())
+        self.board = Board()
+        self.board.init(InitialPosition())
         self.human_player = Player.WHITE
         self.current_player = Player.WHITE
         self.selected_figure = None
@@ -97,7 +98,7 @@ class Application:
         return
 
     def make_move(self, move: Movement):
-        self.board.make_move(move)
+        self.board.move(move)
         print(f"{len(self.board.moves)}. {move}")
         self.selected_figure = None
         self.current_player = self.current_player * -1
@@ -117,10 +118,10 @@ class Application:
         if cell is None:
             return
         position = cell.position
-        figure = self.board.get_figure(position)
+        figure = self.board.figure_at(position)
         if figure is not None and figure.color == self.current_player:
             self.selected_figure = figure
-            self.valid_moves = self.board.legal_moves(self.current_player, figure)
+            self.valid_moves = list(self.board.figure_moves(figure))
             highlighted = [move.to_pos for move in self.valid_moves] + [self.selected_figure.position]
             for cell in self.board_canvas.cells:
                 cell.highlighted = cell.position in highlighted
@@ -136,8 +137,8 @@ class Application:
     def rollback_move(self):
         if self.current_player != self.human_player:
             return
-        self.board.rollback_move()
-        self.board.rollback_move()
+        self.board.rollback()
+        self.board.rollback()
         for cell in self.board_canvas.cells:
             cell.highlighted = False
         pass

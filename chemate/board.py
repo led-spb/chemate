@@ -1,220 +1,64 @@
-from typing import Iterator, List, Union
+from typing import Iterator, Union
 
-from chemate.figure import King, Figure
-from chemate.utils import Movement, Position, Direction
+from chemate.figures import King, Pawn, Queen, Rook, Bishop, Knight
+from chemate.positions import PositionFactory
+from chemate.core import Position, Movement, Figure, Player
+from chemate.directions import Left, Right
 
 
-class Board(object):
-    def __init__(self, position_factory):
-        self.position_factory = position_factory
-        self.board = None
+class Board:
+    def __init__(self) -> None:
+        self.board = []
         self.moves = []
         self.balance = 0
-        self.positions = []
-        self.init()
-        self.check_status = False
+        self.clear()
 
-    def __hash__(self):
-        """
-        Calculates hash for current position
-        :return:
-        """
-        lst = ['.' if x is None else x.char for x in self.board]
-        s = ''.join(lst)
-        return s.__hash__()
-
-    def __getstate__(self):
-        return {'board': self.board, 'moves': self.moves, 'check_status': self.check_status}
-
-    def __setstate__(self, state):
-        self.balance = 0
-        self.board = state['board']
-        self.moves = state['moves']
-        for move in self.moves:
-            if move.taken_figure is not None:
-                move.taken_figure.board = self
-            if move.figure is not None:
-                move.figure.board = self
-            if move.transform_to is not None:
-                move.transform_to.board = self
-            if move.rook is not None:
-                move.rook.board = self
-        self.check_status = state['check_status']
-        self.positions = []
-        self.cache_positions()
-        self.put_figures(self.figures())
-
-    def clear(self):
-        """
-        Clears the board
-        :return: None
-        """
+    def clear(self) -> None:
         self.board = [None for x in range(64)]
         self.moves = []
         self.balance = 0
 
-    def init(self):
-        """
-        Generate initial state of board
-        :return: None
-        """
+    def init(self, factory: PositionFactory) -> None:
         self.clear()
-        self.put_figures(self.position_factory.figures())
-        self.cache_positions()
+        self.put_figures(factory.figures())
 
-    def cache_positions(self):
-        self.positions = [None for x in range(64)]
-        cache = [Position(index) for index in range(64)]
-        for pos in cache:
-            variants = dict()
-            variants[Direction.UP] = [cache[pos.index + Direction.UP*i] for i in range(1, 8-pos.y)]
-            variants[Direction.DOWN] = [cache[pos.index + Direction.DOWN*i] for i in range(1, pos.y+1)]
-            variants[Direction.RIGHT] = [cache[pos.index + Direction.RIGHT*i] for i in range(1, 8-pos.x)]
-            variants[Direction.LEFT] = [cache[pos.index + Direction.LEFT*i] for i in range(1, pos.x+1)]
-
-            variants[Direction.UP_LEFT] = [cache[pos.index + Direction.UP_LEFT*i] for i in range(1, min(8-pos.y, pos.x+1))]
-            variants[Direction.UP_RIGHT] = [cache[pos.index + Direction.UP_RIGHT*i] for i in range(1, min(8-pos.y, 8-pos.x))]
-            variants[Direction.DOWN_LEFT] = [cache[pos.index + Direction.DOWN_LEFT*i] for i in range(1, min(pos.y+1, pos.x+1))]
-            variants[Direction.DOWN_RIGHT] = [cache[pos.index + Direction.DOWN_RIGHT*i] for i in range(1, min(pos.y+1, 8-pos.x))]
-            self.positions[pos.index] = variants
+    def put_figures(self, figures: Iterator[Figure]) -> None:
+        for figure in figures:
+            self.put_figure(figure)
         pass
 
-    def gen_positions_by_dir(self, position, direction, color=None, limit=8) -> List[Position]:
-        """
-        Generate continues moves in direction from current position
-        :param position: Position
-        :param direction: Direction
-        :param color: Stop when specified figure is occured
-        :param limit: Check only first N moves in this direction
-        :return: Iterator for Position object with available positions
-        """
-        positions = self.positions[position.index][direction]
-        for pos in positions:
-            figure = self.board[pos.index]
-            if figure is not None and (color is None or figure.color == color):
-                return
-            yield pos
-            limit = limit - 1
-            if limit == 0 or figure is not None:
-                return
-        pass
+    def __str__(self):
+        lines = [['.' for x in range(8)] for y in range(8)]
+        for figure in self.figures:
+            lines[7 - figure.position.y][figure.position.x] = figure.char
+        return "\n".join([" ".join(line) for line in lines])
 
-    def put_figure(self, figure: Figure):
-        """
-        Put a figure on the board
-        :return: None
-        """
+    def put_figure(self, figure: Figure) -> None:
         self.board[figure.position.index] = figure
-        figure.board = self
         self.balance += figure.price
+
+    def remove_figure(self, figure: Figure) -> None:
+        self.board[figure.position.index] = None
+        self.balance -= figure.price
+
+    def attacked_by(self, figure: Figure) -> Iterator[Position]:
+        for direction in figure.directions(True):
+            for pos in direction:
+                fig = self.figure_at(pos)
+                if fig is not None and fig.color == figure.color:
+                    break
+                yield pos
+                if fig is not None:
+                    break
         pass
 
-    def get_figure(self, position: Position) -> Figure:
-        """
-        Get figure at specified location on board
-        :param position: Position on board
-        :return: Figure instance or None
-        """
-        return self.board[position.index]
-
-    def find_figures(self, figure_class, color=None):
-        for figure in self.figures():
-            if isinstance(figure, figure_class) and (color is None or figure.color == color):
-                yield figure
-        pass
-
-    def make_move(self, move: Movement) -> Movement:
-        """
-        Move figure to the new location
-        :type move: Movement
-        :return: None
-        """
-        if move.figure is None:
-            move.figure = self.board[move.from_pos.index]
-        if move.taken_figure is None:
-            move.taken_figure = self.board[move.to_pos.index]
-        if move.taken_figure is not None:
-            self.balance -= move.taken_figure.price
-        if move.transform_to is not None:
-            self.balance += move.transform_to.price
-            self.balance -= move.figure.price
-
-        figure = move.transform_to or move.figure
-        figure.moves += 1
-        self.board[move.from_pos.index] = None
-        self.board[move.to_pos.index] = figure
-        figure.position = move.to_pos
-        figure.board = self
-
-        # make rook movement
-        if move.rook is not None:
-            # hack for restore move from pickle
-            move.rook = self.get_figure(move.rook.position)
-            rook = move.rook
-            long = rook.position.x - move.from_pos.x < 0
-            new_rook_pos = Position.from_xy(3 if long else 5, rook.position.y)
-            self.board[rook.position.index] = None
-            self.board[new_rook_pos.index] = rook
-            rook.position = new_rook_pos
-            rook.moves += 1
-
-        # take on passthrough
-        if move.is_passthrough:
-            # hack for restore move from pickle
-            move.taken_figure = self.get_figure(move.taken_figure.position)
-            self.board[move.taken_figure.position.index] = None
-
-        hash_board = hash(self)
-
-        # Set check flag for movement
-        move.is_check = False
-        for new_move in figure.available_moves(hash_board, attack_only=True):
-            if isinstance(new_move.taken_figure, King):
-                move.is_check = True
-                break
-        self.check_status = move.is_check
-
-        # Save movement in stack
-        self.moves.append(move)
-        return move
-
-    def rollback_move(self):
-        """
-        Rollback last move
-        :return: BaseMovement
-        """
-        if len(self.moves) == 0:
-            return
-
-        last_move = self.moves.pop()
-        self.board[last_move.from_pos.index] = last_move.figure
-        self.board[last_move.to_pos.index] = last_move.taken_figure or None
-        last_move.figure.position = last_move.from_pos
-        last_move.figure.moves -= 1
-
-        # Restore rook position
-        if last_move.rook is not None:
-            rook = last_move.rook
-            long = rook.position.x - last_move.from_pos.x < 0
-            new_rook_pos = Position.from_xy(0 if long else 7, rook.position.y)
-            self.board[rook.position.index] = None
-            self.board[new_rook_pos.index] = rook
-            rook.position = new_rook_pos
-            rook.moves -= 1
-
-        # Restore balance
-        if last_move.taken_figure is not None:
-            self.balance += last_move.taken_figure.price
-        if last_move.transform_to is not None:
-            self.balance -= last_move.transform_to.price
-            self.balance -= last_move.figure.price
-
-        # Restore check status
-        if len(self.moves) > 0:
-            self.check_status = self.moves[-1].is_check
-        else:
-            self.check_status = False
-        return last_move
+    def is_attacked(self, color: int, position: Position) -> bool:
+        for figure in self.board:
+            if figure is None or figure.color == color:
+                continue
+            if position in self.attacked_by(figure):
+                return True
+        return False
 
     @property
     def last_move(self) -> Union[Movement, None]:
@@ -222,86 +66,159 @@ class Board(object):
             return self.moves[-1]
         return None
 
-    def put_figures(self, it):
-        """
-        Put all figures on the board from iterator
-        :param it:
-        :return: None
-        """
-        list(map(self.put_figure, it))
-
+    @property
     def figures(self) -> Iterator[Figure]:
-        """
-        Get all figures on the board
-        :return: Iterator object with all figures
-        """
         for figure in self.board:
             if figure is not None:
                 yield figure
         pass
 
-    def all_moves(self, color=None, attack_only=False, figure=None) -> Iterator[Movement]:
-        """
-        Return list of available moves without
-        :param color: only for figures of specified color
-        :param attack_only: only move when have attack
-        :param figure: only legal moves for figure
-        :return: Iterator object
-        """
-        board_hash = hash(self)
-        for fig in self.board:
-            if fig is None or (figure is not None and figure != fig) or (color is not None and fig.color != color):
-                continue
-            for move in fig.available_moves(board_hash, attack_only):
-                if not move.is_passthrough:
-                    taken = self.board[move.to_pos.index]
-                    move.taken_figure = taken
-                yield move
+    def figure_at(self, position: Position) -> Union[None, Figure]:
+        return self.board[position.index]
+
+    def figure_by_class(self, kind, color: int = None) -> Iterator[Figure]:
+        for figure in self.board:
+            if figure is not None and (color is None or figure.color == color) and isinstance(figure, kind):
+                yield figure
         pass
 
-    def legal_moves(self, color, figure=None) -> List[Movement]:
-        """
-        Return only legal moves for player
-        :param figure: Figure
-        :param color: player color
-        :return: list of Movement object
-        """
-        legal_moves = []
-        for move in self.all_moves(color=color, figure=figure):
-            # Try to make move and when check position
-            self.make_move(move)
-            if not self.test_for_check(color):
-                legal_moves.append(move)
-            self.rollback_move()
-        return legal_moves
+    def valid_moves(self, color: int) -> Iterator[Movement]:
+        for figure in self.figures:
+            if figure.color == color:
+                yield from self.figure_moves(figure)
+        pass
 
-    def test_for_check(self, color):
-        """
-        Return true if current position has check for color player
-        :param color:
-        :return:
-        """
-        # todo: проверять не все ходы соперника, а только тех фигур, кто на расстоянии атаки на нас
-        for opposite_move in self.all_moves(color=-color, attack_only=True):
-            if opposite_move.taken_figure is not None and isinstance(opposite_move.taken_figure, King):
-                return True
-        return False
+    def figure_moves(self, figure: Figure) -> Iterator[Movement]:
+        is_pawn = isinstance(figure, Pawn)
+        is_king = isinstance(figure, King)
 
-    def has_mate(self, color):
-        """
-        Return true if current position has checkmate for color player
-        :param color:
-        :return:
-        """
-        return self.test_for_check(color) and list(self.legal_moves(color)) == []
+        for direction in figure.directions():
+            for pos in direction:
+                taken_figure = self.figure_at(pos)
+                rook = None
+                transform_to = [None]
 
-    def has_moved(self, figure):
-        """
-        Check for figure has moved
-        :param figure:
-        :return:
-        """
-        for m in self.moves:
-            if m.figure == figure:
-                return True
-        return False
+                if taken_figure is not None and taken_figure.color == figure.color:
+                    break
+
+                if is_pawn:
+                    if figure.position.x == pos.x and taken_figure is not None:
+                        break
+
+                    if figure.position.x != pos.x and taken_figure is None:
+                        if not (pos.y == 5 and figure.color == Player.WHITE) and \
+                                not (pos.y == 2 and figure.color == Player.BLACK):
+                            break
+                        passthrough_pos = Position(pos.index + (-8 if figure.color == Player.WHITE else +8))
+                        taken_figure = self.figure_at(passthrough_pos)
+                        if taken_figure is None or not isinstance(taken_figure, Pawn) or \
+                                taken_figure.color == figure.color:
+                            break
+                        if self.last_move is None or self.last_move.figure != taken_figure or \
+                                abs(self.last_move.from_pos.index - self.last_move.to_pos.index) != 16:
+                            break
+
+                if is_pawn and pos.is_last_line_for(figure.color):
+                    transform_to = [
+                        Queen(figure.color, pos), Rook(figure.color, pos), Bishop(figure.color, pos),
+                        Knight(figure.color, pos)
+                    ]
+
+                # King rooking logic
+                if is_king and abs(pos.index-figure.position.index) == 2:
+                    rook_valid, rook = self.validate_rooking(figure, pos)
+                    if not rook_valid:
+                        break
+
+                for transform in transform_to:
+                    move = Movement(
+                        figure=figure,
+                        from_pos=figure.position,
+                        to_pos=pos,
+                        taken_figure=taken_figure,
+                        transform_to=transform,
+                        rook=rook
+                    )
+                    self.move(move, test_mode=True)
+                    has_check = self.test_for_check(figure.color)
+                    self.rollback()
+                    if has_check:
+                        break
+                    yield move
+                if taken_figure is not None:
+                    break
+        pass
+
+    def validate_rooking(self, king: Figure, pos: Position) -> tuple[bool, Union[Figure, None]]:
+        is_long = (pos.index - king.position.index) < 0
+        rook = self.figure_at(Position.from_xy(0 if is_long else 7, pos.y))
+
+        if rook is None or not isinstance(rook, Rook) or king.color != rook.color or rook.moves > 0:
+            return False, rook
+
+        rook_direction = Left(king.position, 3) if is_long else Right(king.position, 2)
+        for figure in map(self.figure_at, rook_direction):
+            if figure is not None:
+                return False, rook
+
+        for delta in range(0, -3 if is_long else +3, -1 if is_long else 1):
+            if self.is_attacked(king.color, Position(king.position.index+delta)):
+                return False, rook
+        return True, rook
+
+    def move(self, movement: Movement, test_mode: bool = False) -> None:
+        if movement.taken_figure is not None:
+            self.remove_figure(movement.taken_figure)
+
+        self.board[movement.from_pos.index] = None
+        self.board[movement.to_pos.index] = movement.transform_to or movement.figure
+
+        movement.figure.position = movement.to_pos
+        movement.figure.moves += 1
+
+        if movement.rook is not None:
+            is_long = movement.to_pos.index - movement.from_pos.index < 0
+            rook_pos = Position(movement.to_pos.index + (1 if is_long else -1))
+            self.board[movement.rook.position.index] = None
+            self.board[rook_pos.index] = movement.rook
+            movement.rook.position = rook_pos
+            movement.rook.moves += 1
+
+        self.moves.append(movement)
+
+        if not test_mode:
+            movement.is_check = self.test_for_check(movement.figure.color * -1)
+        pass
+
+    def rollback(self) -> None:
+        if len(self.moves) == 0:
+            return
+
+        move = self.moves.pop()
+
+        self.board[move.to_pos.index] = None
+        self.board[move.from_pos.index] = move.figure
+        move.figure.position = move.from_pos
+        move.figure.moves -= 1
+
+        if move.rook is not None:
+            is_long = move.to_pos.index - move.from_pos.index < 0
+            initial_pos = Position(move.to_pos.index + (-2 if is_long else 1))
+            self.board[move.rook.position.index] = None
+            self.board[initial_pos.index] = move.rook
+            move.rook.position = initial_pos
+            move.rook.moves -= 1
+
+        if move.taken_figure is not None:
+            self.put_figure(move.taken_figure)
+        pass
+
+    def test_for_check(self, color: int) -> bool:
+        king = next(self.figure_by_class(King, color), None)
+        if king is None:
+            # raise ValueError('King is not found on the board')
+            return False
+        return self.is_attacked(king.color, king.position)
+
+    def test_for_mate(self, color: int) -> bool:
+        return self.test_for_check(color) and len(list(self.valid_moves(color))) == 0

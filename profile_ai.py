@@ -2,7 +2,7 @@ import cProfile
 from chemate.board import Board
 from chemate.decision import DecisionTree
 from chemate.positions import InitialPosition
-from chemate.utils import Player
+from chemate.core import Player
 
 
 def start():

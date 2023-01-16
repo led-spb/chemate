@@ -1,6 +1,6 @@
-from chemate.figure import *
+from chemate.figures import *
 from chemate.positions import InitialPosition, EmptyPosition
-from chemate.utils import Position
+from chemate.core import Position, Player
 from chemate.board import Board
 from chemate.decision import DecisionTree
 import pytest
