@@ -14,10 +14,11 @@ from multiprocessing import Process, Queue
 
 def decision_process(queue: Queue, result: Queue, color: int):
     print('decision process started')
+    decision = DecisionTree(4)
     while True:
         board = queue.get()
-        decision = DecisionTree(board, 3)
-        move, score = decision.best_move(color)
+        move, score, variants = decision.best_move(board, color)
+        print(f'Best move {move}. score {score}. variants: {variants}')
         result.put(move)
     pass
 
@@ -60,7 +61,7 @@ class Application:
         self.result_queue = Queue()
         self.ai_process = Process(
             target=decision_process,
-            kwargs={'color': self.human_player * -1,
+            kwargs={'color': -self.human_player,
                     'queue': self.task_queue,
                     'result': self.result_queue}
         )
@@ -99,7 +100,11 @@ class Application:
 
     def make_move(self, move: Movement):
         self.board.move(move)
-        print(f"{len(self.board.moves)}. {move}")
+        if self.current_player == Player.WHITE:
+            print(f"{len(self.board.moves)//2+1}. {move}", end="\t")
+        else:
+            print(f'{move}')
+
         self.selected_figure = None
         self.current_player = self.current_player * -1
         self.valid_moves = []
