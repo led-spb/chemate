@@ -2,6 +2,7 @@ from chemate.board import Board
 from chemate.core import Player, Position
 from chemate.figures import King, Rook, Pawn, Bishop
 from chemate.positions import EmptyPosition
+from chemate.utils import PlainExporter
 
 
 class TestKing(object):
@@ -83,7 +84,7 @@ class TestKing(object):
         rook = Rook(Player.WHITE, Position.from_char('h1'))
         bishop = Bishop(Player.BLACK, Position.from_char('a5'))
         board.put_figures([king, rook, bishop])
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.figure_moves(king)))
         assert '0-0' not in moves, "Rook must be unavailable when e1 is under pressure"
 

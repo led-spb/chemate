@@ -1,10 +1,10 @@
 import functools
 import itertools
 import multiprocessing
+import random
 
 from chemate.board import Board
 from chemate.core import Position, Player, Movement
-import random
 
 
 class DecisionTree(object):
@@ -13,7 +13,7 @@ class DecisionTree(object):
                 Position.from_char('d5'),
                 Position.from_char('e5')]
 
-    """
+    """ 
     This class realize decision tree algorithm
     """
     def __init__(self, max_level: int) -> None:
@@ -27,10 +27,10 @@ class DecisionTree(object):
         self.board.rollback()
         return score, variants
 
-    def best_move(self, board: Board, color: int, depth: int = None) -> tuple[Movement, float, int]:
+    def best_move(self, board: Board, depth: int = None) -> tuple[Movement, float, int]:
         self.board = board
         depth = depth or self.max_level
-
+        color = self.board.current
         best_move = None
         best_score = -9999 if color == Player.WHITE else 9999
 
@@ -43,7 +43,8 @@ class DecisionTree(object):
             for score, variants in pool.imap(func, moves):
                 move = next(all_moves)
                 total_variants += variants
-                if (color == Player.WHITE and score > best_score) or (color == Player.BLACK and score < best_score):
+                if (color == Player.WHITE and score > best_score) or (color == Player.BLACK and score < best_score) \
+                        or best_move is None:
                     best_move = move
                     best_score = score
         finally:

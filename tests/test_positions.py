@@ -1,7 +1,6 @@
 from chemate.board import Board
 from chemate.figures import Bishop, Queen
 from chemate.positions import EmptyPosition, PredefinedFENPosition
-from chemate.utils import StringPainter
 from chemate.core import Position, Player
 
 

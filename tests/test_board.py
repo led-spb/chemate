@@ -2,6 +2,7 @@ from chemate.board import Board
 from chemate.core import Movement
 from chemate.positions import EmptyPosition, InitialPosition, PredefinedFENPosition
 from chemate.figures import *
+from chemate.utils import PlainExporter
 
 
 class TestBoard(object):
@@ -39,7 +40,7 @@ class TestBoard(object):
     def test_board_valid_moves(self):
         board = Board()
         board.init(PredefinedFENPosition('8/8/r4PK1/8/1k6/8/8/8'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 7
@@ -61,40 +62,39 @@ class TestBoard(object):
         # No check, no mate
         board = Board()
         board.init(PredefinedFENPosition('7k/p7/8/8/3b4/8/6PP/7K'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 4
 
         # Check, no mate
         board.init(PredefinedFENPosition('7k/8/p7/8/3b4/8/6PP/6K1'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 2
 
         board.init(PredefinedFENPosition('7k/8/8/p7/3b4/7P/6P1/2r3K1'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 1
 
         board.init(PredefinedFENPosition('7k/8/8/p1Q5/3b4/7P/6P1/2r3K1'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 1
 
         board.init(PredefinedFENPosition('7k/8/8/p1Q5/8/7P/6P1/2r3K1'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 3
 
-
         # Check and mate
         board.init(PredefinedFENPosition('7k/8/p7/8/3b4/8/6PP/2r3K1'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
         assert len(moves) == 0
@@ -103,7 +103,7 @@ class TestBoard(object):
     def test_chemate_1(self):
         board = Board()
         board.init(PredefinedFENPosition('7k/8/8/p7/8/7P/5QP1/2r3K1'))
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         assert board.test_for_check(Player.WHITE)
         moves = list(map(str, board.valid_moves(Player.WHITE)))
         print(moves)
@@ -131,7 +131,7 @@ class TestBoard(object):
         assert not board.test_for_check(Player.WHITE)
         assert not board.test_for_check(Player.BLACK)
 
-        print(f'\n{board}\n')
+        print(f'\n{board.export(PlainExporter)}\n')
         p = board.figure_at(Position.from_char('a7'))
         move = next(filter(lambda m: m.to_pos == Position.from_char('a1'),
                            board.figure_moves(p)

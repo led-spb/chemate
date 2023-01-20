@@ -1,9 +1,10 @@
-from typing import Iterator, Union
+from typing import Iterator, Union, Type
 
 from chemate.figures import King, Pawn, Queen, Rook, Bishop, Knight
 from chemate.positions import PositionFactory
 from chemate.core import Position, Movement, Figure, Player
 from chemate.directions import Left, Right
+from chemate.utils import BoardExporter
 
 
 class Board:
@@ -11,27 +12,27 @@ class Board:
         self.board = []
         self.moves = []
         self.balance = 0
+        self.move_number = 1
+        self.current = Player.WHITE
         self.clear()
 
     def clear(self) -> None:
         self.board = [None for x in range(64)]
         self.moves = []
         self.balance = 0
+        self.move_number = 1
 
     def init(self, factory: PositionFactory) -> None:
-        self.clear()
-        self.put_figures(factory.figures())
+        factory.apply(self)
 
     def put_figures(self, figures: Iterator[Figure]) -> None:
         for figure in figures:
             self.put_figure(figure)
         pass
 
-    def __str__(self):
-        lines = [['.' for x in range(8)] for y in range(8)]
-        for figure in self.figures:
-            lines[7 - figure.position.y][figure.position.x] = figure.char
-        return "\n".join([" ".join(line) for line in lines])
+    def export(self, exporter: Type[BoardExporter]):
+        export_inst = exporter(self)
+        return export_inst.export()
 
     def put_figure(self, figure: Figure) -> None:
         self.board[figure.position.index] = figure
@@ -169,9 +170,14 @@ class Board:
     def move(self, movement: Movement, test_mode: bool = False) -> None:
         if movement.taken_figure is not None:
             self.remove_figure(movement.taken_figure)
+            self.balance -= movement.taken_figure.price
 
         self.board[movement.from_pos.index] = None
         self.board[movement.to_pos.index] = movement.transform_to or movement.figure
+
+        if movement.transform_to is not None:
+            self.balance += movement.transform_to.price
+            self.balance -= movement.figure.price
 
         movement.figure.position = movement.to_pos
         movement.figure.moves += 1
@@ -188,6 +194,9 @@ class Board:
 
         if not test_mode:
             movement.is_check = self.test_for_check(movement.figure.color * -1)
+        if movement.figure.color == Player.BLACK:
+            self.move_number += 1
+        self.current = -movement.figure.color
         pass
 
     def rollback(self) -> None:
@@ -211,6 +220,15 @@ class Board:
 
         if move.taken_figure is not None:
             self.put_figure(move.taken_figure)
+            self.balance += move.taken_figure.price
+
+        if move.transform_to is not None:
+            self.balance -= move.transform_to.price
+            self.balance += move.figure.price
+
+        if move.figure.color == Player.BLACK:
+            self.move_number -= 1
+        self.current = -move.figure.color
         pass
 
     def test_for_check(self, color: int) -> bool:

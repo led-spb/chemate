@@ -12,13 +12,13 @@ from ..core import Player, Movement
 from multiprocessing import Process, Queue
 
 
-def decision_process(queue: Queue, result: Queue, color: int):
+def decision_process(queue: Queue, result: Queue):
     print('decision process started')
     decision = DecisionTree(4)
     while True:
         board = queue.get()
-        move, score, variants = decision.best_move(board, color)
-        print(f'Best move {move}. score {score}. variants: {variants}')
+        move, score, variants = decision.best_move(board)
+        # print(f'Best move {move}. score {score}. variants: {variants}')
         result.put(move)
     pass
 
@@ -36,8 +36,7 @@ class Application:
         self.static = pg.sprite.Group()
         self.board = Board()
         self.board.init(InitialPosition())
-        self.human_player = Player.WHITE
-        self.current_player = Player.WHITE
+        self.human_players = (Player.WHITE,)
         self.selected_figure = None
         self.valid_moves = []
 
@@ -61,9 +60,7 @@ class Application:
         self.result_queue = Queue()
         self.ai_process = Process(
             target=decision_process,
-            kwargs={'color': -self.human_player,
-                    'queue': self.task_queue,
-                    'result': self.result_queue}
+            kwargs={'queue': self.task_queue, 'result': self.result_queue}
         )
 
         self.WIDTH = self.outer_border * 2 + self.board_canvas.rect.width
@@ -88,7 +85,7 @@ class Application:
         self.task_queue.put(self.board)
 
     def process_comp_move(self):
-        if self.current_player == self.human_player or self.ai_process is None:
+        if self.board.current in self.human_players or self.ai_process is None:
             return
         try:
             move = self.result_queue.get(False)
@@ -100,15 +97,14 @@ class Application:
 
     def make_move(self, move: Movement):
         self.board.move(move)
-        if self.current_player == Player.WHITE:
-            print(f"{len(self.board.moves)//2+1}. {move}", end="\t")
+        if self.board.current == Player.WHITE:
+            print(f"{self.board.move_number}. {move}", end="\t")
         else:
             print(f'{move}')
 
         self.selected_figure = None
-        self.current_player = self.current_player * -1
         self.valid_moves = []
-        if self.current_player != self.human_player:
+        if self.board.current not in self.human_players:
             self.start_comp_move()
         # clear highlight
         for cell in self.board_canvas.cells:
@@ -116,7 +112,7 @@ class Application:
         pass
 
     def on_click(self, pos):
-        if self.current_player != self.human_player:
+        if self.board.current not in self.human_players:
             return
 
         cell = self.board_canvas.find_cell(pos)
@@ -124,7 +120,7 @@ class Application:
             return
         position = cell.position
         figure = self.board.figure_at(position)
-        if figure is not None and figure.color == self.current_player:
+        if figure is not None and figure.color == self.board.current:
             self.selected_figure = figure
             self.valid_moves = list(self.board.figure_moves(figure))
             highlighted = [move.to_pos for move in self.valid_moves] + [self.selected_figure.position]
@@ -140,7 +136,7 @@ class Application:
         pass
 
     def rollback_move(self):
-        if self.current_player != self.human_player:
+        if self.board.current not in self.human_players:
             return
         self.board.rollback()
         self.board.rollback()
