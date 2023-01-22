@@ -6,12 +6,13 @@ module.exports = {
     module: {
         rules: [
             { test: /\.s[ac]ss$/i, use: ['style-loader','css-loader','sass-loader'] },
+            { test: /\.css$/i, use: ['style-loader','css-loader','sass-loader'] },
             { test: /\.(js)$/, use: 'babel-loader' },
         ]
     },
     output: {
        path: path.resolve(__dirname, '../chemate/webapp/static'),
-       filename: 'js/index.js'
+       filename: 'index.js'
     },
     plugins: [
         new HtmlWebpackPlugin({template: 'src/index.html'}),

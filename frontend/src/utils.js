@@ -1,4 +1,5 @@
 export default {
+
     fenFigures: function* (data){
         let y = 7
         for(const row of data.split(' ').shift().split('/')){
@@ -13,5 +14,10 @@ export default {
             }
             y--
         }
-    }
+    },
+
+    positionStr: function(x, y){
+        return String.fromCharCode(97+x)+(y+1)
+    },
+
 }

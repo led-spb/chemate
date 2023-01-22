@@ -4,11 +4,13 @@
   "description": "",
   "private": true,
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "watch": "webpack --watch"
   },
-  "author": "",
+  "author": "Alexey Ponimash",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.2.3",
     "chess-merida-font": "^0.0.3",
     "konva": "^8.4.1"
   },

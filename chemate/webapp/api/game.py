@@ -18,19 +18,41 @@ class GameNewApi(MethodView):
         board.init(InitialPosition())
         return {'board': board.export(FENExporter),
                 'balance': board.balance,
-                'valid_moves': list(map(str, board.valid_moves(board.current)))
+                'valid_moves': list(map(lambda m: [str(m.from_pos), str(m.to_pos), str(m)],
+                                        board.valid_moves(board.current)))
+                }
+
+
+@blueprint.route('/api/game/move')
+class GameMoveApi(MethodView):
+    @blueprint.response(200)
+    def post(self):
+        board = Board()
+        board.init(PredefinedFENPosition(flask.request.json.get("board")))
+        m = flask.request.json.get('move')
+
+        for move in board.valid_moves(board.current):
+            if str(move.from_pos) == m[0] and str(move.to_pos) == m[1]:
+                board.move(move)
+                break
+
+        return {'board': board.export(FENExporter),
+                'balance': board.balance,
+                'valid_moves': list(map(lambda m: [str(m.from_pos), str(m.to_pos), str(m)],
+                                        board.valid_moves(board.current)))
                 }
 
 
 @blueprint.route('/api/game/moves')
-class GameMoveApi(MethodView):
+class GameMovesApi(MethodView):
     @blueprint.response(200)
     def post(self):
         board = Board()
         board.init(PredefinedFENPosition(flask.request.json.get("board")))
         return {'board': board.export(FENExporter),
                 'balance': board.balance,
-                'valid_moves': list(map(str, board.valid_moves(board.current)))
+                'valid_moves': list(map(lambda m: [str(m.from_pos), str(m.to_pos), str(m)],
+                                        board.valid_moves(board.current)))
                 }
 
 
@@ -50,5 +72,6 @@ class BoardCalcApi(MethodView):
                 'balance': board.balance,
                 'score': score,
                 'variants': variants,
-                'valid_modes':  list(map(str, board.valid_moves(board.current)))
+                'valid_moves': list(map(lambda m: [str(m.from_pos), str(m.to_pos), str(m)],
+                                        board.valid_moves(board.current)))
                 }
