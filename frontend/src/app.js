@@ -8,9 +8,10 @@ export default {
     container: 'container',
     board: null,
     current: 'w',
+    player: 'w',
     history: [],
 
-    run: function() {
+    run(){
         console.log('Chemate is started')
 
         this.stage = new Konva.Stage({
@@ -25,9 +26,10 @@ export default {
         this.stage.add(this.boardLayer)
         this.stage.add(this.figuresLayer)
 
-        axios.get('api/game/new')
-            .then((response) => { this.parseResponse(response) })
-        },
+        document.getElementById('rollback').onclick=() => { this.rollback() }
+        document.getElementById('new').onclick=() => { this.new_game() }
+        this.new_game()
+    },
 
     makeFigures(){
         this.figuresLayer.destroyChildren()
@@ -76,28 +78,45 @@ export default {
         return figure
     },
 
-    parseResponse(response){
-        this.board = response.data.board
-        this.history.push(this.board)
+    parseResponse(data){
+        this.board = data.board
         this.makeFigures()
         this.current = this.board.split(' ')[1]
-        if( this.current == 'w'){
-            this.valid_moves = response.data.valid_moves
+        if( this.current == this.player){
+            this.valid_moves = data.valid_moves
         }else{
             this.valid_moves = []
         }
+
+        this.history.push({board: this.board, valid_moves: this.valid_moves})
     },
 
     makeMove(move){
         console.log('Make move', move[2])
         axios.post('api/game/move', {board: this.board, move: move}).then( (response) => {
-            this.parseResponse(response)
-            if(this.current == 'b'){
+            this.parseResponse(response.data)
+            if(this.current != this.player){
                 axios.post('/api/game/calc', {board: this.board}).then( (response) => {
-                    this.parseResponse(response)
+                    this.parseResponse(response.data)
                 })
             }
         })
+    },
+
+    rollback(){
+        if( this.history.length < 3)
+           return
+        this.history.pop()
+        this.history.pop()
+        const state = this.history.pop()
+        console.log('Rollback move', this.history, state)
+        this.parseResponse(state)
+    },
+
+    new_game(){
+        this.history = []
+        axios.get('api/game/new')
+            .then((response) => { this.parseResponse(response.data) })
     },
 
     onCellClick(cell){
@@ -117,7 +136,7 @@ export default {
         }
     },
 
-    initBoard: function(){
+    initBoard(){
         for(let y=0; y<8; y++){
             for(let x=0; x<8; x++){
                 let cell = new Konva.Rect({
@@ -128,7 +147,6 @@ export default {
                 cell.on('click', (event) => {
                     this.onCellClick(event.target)
                 })
-
                 this.boardLayer.add(cell)
             }
         }
