@@ -1,3 +1,6 @@
+import json
+import random
+
 import flask
 from flask.views import MethodView
 from flask_smorest import Blueprint
@@ -16,6 +19,27 @@ class GameNewApi(MethodView):
     def get(self):
         board = Board()
         board.init(InitialPosition())
+        return {'board': board.export(FENExporter),
+                'balance': board.balance,
+                'valid_moves': list(map(lambda m: [str(m.from_pos), str(m.to_pos), str(m)],
+                                        board.valid_moves(board.current)))
+                }
+
+
+@blueprint.route('/api/game/tasks')
+class TasksApi(MethodView):
+    def __init__(self) -> None:
+        super().__init__()
+        with open('chemate/webapp/resources/m3hv01.json') as fp:
+            self.tasks = json.load(fp)
+
+    @blueprint.response(200)
+    def get(self):
+        board = Board()
+
+        task = random.choice(self.tasks)
+        board.init(PredefinedFENPosition(task.get('response').get('fen')))
+
         return {'board': board.export(FENExporter),
                 'balance': board.balance,
                 'valid_moves': list(map(lambda m: [str(m.from_pos), str(m.to_pos), str(m)],

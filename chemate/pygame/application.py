@@ -14,7 +14,7 @@ from multiprocessing import Process, Queue
 
 def decision_process(queue: Queue, result: Queue):
     print('decision process started')
-    decision = DecisionTree(4)
+    decision = DecisionTree(3)
     while True:
         board = queue.get()
         move, score, variants = decision.best_move(board)
@@ -36,7 +36,7 @@ class Application:
         self.static = pg.sprite.Group()
         self.board = Board()
         self.board.init(InitialPosition())
-        self.human_players = (Player.WHITE,)
+        self.human_players = (Player.WHITE, )
         self.selected_figure = None
         self.valid_moves = []
 
@@ -52,7 +52,8 @@ class Application:
             board=self.board,
             font=figure_font,
             pos=(self.outer_border, self.outer_border),
-            cell_size=self.cell_size
+            cell_size=self.cell_size,
+            view=self.human_players[0]
         )
         self.static.add(self.board_canvas)
 
@@ -82,7 +83,8 @@ class Application:
         pass
 
     def start_comp_move(self):
-        self.task_queue.put(self.board)
+        if self.board.current not in self.human_players:
+            self.task_queue.put(self.board)
 
     def process_comp_move(self):
         if self.board.current in self.human_players or self.ai_process is None:
@@ -146,6 +148,7 @@ class Application:
 
     def run(self):
         self.ai_process.start()
+        self.start_comp_move()
         try:
             self.screen = pg.display.set_mode((self.WIDTH, self.HEIGHT))
             self.running = True

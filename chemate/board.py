@@ -228,13 +228,12 @@ class Board:
 
         if move.figure.color == Player.BLACK:
             self.move_number -= 1
-        self.current = -move.figure.color
+        self.current = move.figure.color
         pass
 
     def test_for_check(self, color: int) -> bool:
         king = next(self.figure_by_class(King, color), None)
         if king is None:
-            # raise ValueError('King is not found on the board')
             return False
         return self.is_attacked(king.color, king.position)
 

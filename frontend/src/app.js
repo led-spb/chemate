@@ -5,6 +5,7 @@ const axios = require('axios')
 
 export default {
     cellSize: 64,
+    border: 1,
     container: 'container',
     board: null,
     current: 'w',
@@ -74,6 +75,8 @@ export default {
 
         figure.on('click', (event)=> {
             this.onCellClick(event.target)
+        }).on('tap', (event) => {
+            this.onCellClick(event.target)
         })
         return figure
     },
@@ -137,14 +140,22 @@ export default {
     },
 
     initBoard(){
+        this.boardLayer.add(new Konva.Rect({
+            x: 0, y: 0, width: this.cellSize*8+this.border*2, height: this.cellSize*8+this.border*2,
+            fill: 'black'
+        }))
+
         for(let y=0; y<8; y++){
             for(let x=0; x<8; x++){
                 let cell = new Konva.Rect({
-                    x: x*this.cellSize, y: y*this.cellSize, width: this.cellSize, height: this.cellSize,
-                    fill: (x+y%2) %2 ? 'gray' : 'white', stroke: 'black', strokeWidth: 1,
+                    x: x*this.cellSize+this.border, y: y*this.cellSize+this.border,
+                    width: this.cellSize-this.border, height: this.cellSize-this.border,
+                    fill: (x+y%2) %2 ? 'gray' : 'white', stroke: 'black', strokeWidth: 0,
                     id: utils.positionStr(x, (7-y))
                 })
                 cell.on('click', (event) => {
+                    this.onCellClick(event.target)
+                }).on('tap', (event) => {
                     this.onCellClick(event.target)
                 })
                 this.boardLayer.add(cell)

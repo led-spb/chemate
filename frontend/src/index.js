@@ -36,5 +36,11 @@ function whenFontIsLoaded(callback, attemptCount) {
 }
 
 whenFontIsLoaded(function () {
+  const viewport = window.visualViewport
+  if( App.cellSize*8 > viewport.width-16 ){
+    App.cellSize = Math.floor((viewport.width-16) / 8)
+  }
+
+  console.log('Current cell size', App.cellSize)
   App.run()
 });

@@ -46,7 +46,7 @@ class PredefinedFENPosition(PositionFactory):
         portion = iter(data.split(' '))
         self.figure_data = next(portion)
         self.current = next(portion, 'w')
-        self.rooking = next(portion, 'RQrq')
+        self.rooking = next(portion, 'KQkq')
         self.passthru = next(portion, '-')
         self.empty_moves = next(portion, '0')
         self.move_no = next(portion, '1')
@@ -55,22 +55,29 @@ class PredefinedFENPosition(PositionFactory):
     def apply(self, board):
         super().apply(board)
         board.current = Player.WHITE if self.current.lower() == 'w' else Player.BLACK
+
+        self.set_rooking_state(board, Position.from_char('h1'), Player.WHITE, False)
+        self.set_rooking_state(board, Position.from_char('a1'), Player.WHITE, False)
+        self.set_rooking_state(board, Position.from_char('h8'), Player.BLACK, False)
+        self.set_rooking_state(board, Position.from_char('a8'), Player.BLACK, False)
+
         board.move_number = int(self.move_no)
-        if self.rooking[0] == '-':
-            self.disable_rooking(board, Position.from_char('h1'), Player.WHITE)
-        if self.rooking[1] == '-':
-            self.disable_rooking(board, Position.from_char('a1'), Player.WHITE)
-        if self.rooking[2] == '-':
-            self.disable_rooking(board, Position.from_char('h8'), Player.BLACK)
-        if self.rooking[3] == '-':
-            self.disable_rooking(board, Position.from_char('a8'), Player.BLACK)
+        for char in iter(self.rooking):
+            if char == 'Q':
+                self.set_rooking_state(board, Position.from_char('h1'), Player.WHITE, True)
+            if char == 'K':
+                self.set_rooking_state(board, Position.from_char('a1'), Player.WHITE, True)
+            if char == 'q':
+                self.set_rooking_state(board, Position.from_char('h8'), Player.BLACK, True)
+            if char == 'k':
+                self.set_rooking_state(board, Position.from_char('a8'), Player.BLACK, True)
         pass
 
     @staticmethod
-    def disable_rooking(board, pos: Position, color: int):
+    def set_rooking_state(board, pos: Position, color: int, enabled: bool) -> None:
         fig = board.figure_at(pos)
         if fig is not None and fig.color == color:
-            fig.moves += 1
+            fig.moves = 0 if enabled else 1
 
     def figures(self):
         x, y = 0, 7
@@ -86,4 +93,6 @@ class PredefinedFENPosition(PositionFactory):
         yield from ()
 
 
-InitialPosition = functools.partial(PredefinedFENPosition, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w RQrq - 0 1')
+InitialPosition = functools.partial(
+    PredefinedFENPosition, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+)

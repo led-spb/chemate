@@ -7,25 +7,27 @@ from chemate.core import Position, Player
 
 
 class BoardSprite(pg.sprite.Sprite):
-    def __init__(self, rect: pg.Rect, board_border: int, cell_size: int):
+    def __init__(self, rect: pg.Rect, board_border: int, cell_size: int, view: int):
         super().__init__()
         self.rect = rect
         self.image = pg.Surface(rect.size)
         pg.draw.rect(self.image, (55, 10, 7), pg.Rect((0, 0), rect.size))
         font = pg.font.SysFont('Verdana', board_border, True)
-        self.draw_numbers(font, board_border, cell_size)
+        self.draw_numbers(font, board_border, cell_size, view)
 
-    def draw_numbers(self, font, border, cell_size):
+    def draw_numbers(self, font, border, cell_size, view):
         for idx, char in enumerate("ABCDEFGH"):
             img = font.render(char, True, (255, 255, 255))
             img.set_alpha(128)
-            x = border+idx*cell_size+(cell_size-img.get_width())//2
+            x = (7 if view == -1 else 0) + idx*view
+            x = border+x*cell_size+(cell_size-img.get_width())//2
             self.image.blit(img, (x, (self.rect.height-img.get_height())))
 
-        for idx, char in enumerate("87654321"):
+        for idx, char in enumerate("12345678"):
             img = font.render(char, True, (255, 255, 255))
             img.set_alpha(128)
-            y = border+idx*cell_size+(cell_size-img.get_height())//2
+            y = (7 if view == 1 else 0) - idx*view
+            y = border+y*cell_size+(cell_size-img.get_height())//2
             self.image.blit(img, ((border-img.get_width())//2, y))
         pass
 
@@ -58,6 +60,7 @@ class CellItem(pg.sprite.Sprite):
 class BoardCanvas(pg.sprite.Group):
 
     def __init__(self, font: pg.font.Font, board: Board, pos: tuple[int, int], cell_size: int,
+                 view: int = Player.WHITE,
                  *groups: pg.sprite.AbstractGroup) -> None:
         super().__init__(*groups)
         self.board_border = 15
@@ -68,9 +71,9 @@ class BoardCanvas(pg.sprite.Group):
             (self.board_border*2+self.cell_size*8+self.cell_border,
              self.board_border*2+self.cell_size*8+self.cell_border)
         )
-        self.board_spite = BoardSprite(self.rect, self.board_border, self.cell_size)
+        self.board_spite = BoardSprite(self.rect, self.board_border, self.cell_size, view)
         self.cells = pg.sprite.Group()
-        self.make_cells(board, font)
+        self.make_cells(board, font, view)
 
         self.add(self.board_spite, self.cells)
         pass
@@ -81,13 +84,13 @@ class BoardCanvas(pg.sprite.Group):
                 return cell
         return None
 
-    def make_cells(self, board: Board, font: pg.font.Font):
+    def make_cells(self, board: Board, font: pg.font.Font, view: int):
         for pos in [Position(i) for i in range(64)]:
+            x = (7 if view == -1 else 0) + pos.x * view
+            y = (7 if view == 1 else 0) - pos.y * view
             cell = CellItem(font,
-                            self.rect.left + self.board_border + self.cell_border // 2 + pos.x * self.cell_size +
-                            self.cell_border // 2,
-                            self.rect.top + self.board_border + self.cell_border // 2 + (
-                                        7 - pos.y) * self.cell_size + self.cell_border // 2,
+                            self.rect.left + self.board_border + self.cell_border // 2 + x * self.cell_size + self.cell_border // 2,
+                            self.rect.top + self.board_border + y * self.cell_size + self.cell_border // 2,
                             self.cell_size - self.cell_border,
                             pos, board)
             self.cells.add(cell)
